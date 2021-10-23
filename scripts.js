@@ -1,6 +1,9 @@
 // Lattice Game Main Script
 
 const BOARDSIZE = 9;
+let edgeSize;
+
+let LATTICE;
 
 const cnv = document.querySelector( ".main" );
 const ctx = cnv.getContext( "2d" );
@@ -8,9 +11,11 @@ const ctx = cnv.getContext( "2d" );
 let width;
 let height
 
-function setCanvasSize ( ) {
+function setCanvasSize( ) {
   cnv.width  = width  = window.innerWidth;
   cnv.height = height = window.innerHeight;
+  edgeSize = Math.min( width, height ) / ( BOARDSIZE + 1 );
+  LATTICE?.nodes?.forEach( node => node.calculateScreenPos( ) );
 }
 
 setCanvasSize( );
@@ -37,6 +42,7 @@ class Node {
     this.x = x;
     this.y = y;
     this.z = z;
+    this.calculateScreenPos( );
   }
   getNeighborVectors( ) {
     const { x, y, z } = this;
@@ -47,6 +53,16 @@ class Node {
     this.neighbors = new Map(
       this.getNeighborVectors( ).map( vec => [ coordinate( vec ), lattice.getNodeAt( vec ) ] ).filter( neighbor => neighbor[ 1 ] != undefined )
     );
+  }
+  calculateScreenPos( ) {
+    let { x, y, z } = this;
+    x -= 6;
+    y += 2;
+    z += 4;
+    this.screenpos = {
+      x: ( width  / 2 ) + edgeSize * ( x * Math.cos( 2 * Math.PI / 6 ) + y * Math.cos( 2 * Math.PI / 3 ) ),
+      y: ( height / 2 ) - edgeSize * ( x * Math.sin( 2 * Math.PI / 6 ) + y * Math.sin( 2 * Math.PI / 3 ) )
+    };
   }
 }
 
@@ -66,12 +82,33 @@ class Lattice {
   getNodeAt( vector ) {
     return this.nodes.get( coordinate( vector ) );
   }
+  draw( ) {
+    ctx.fillStyle = "black";
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = Math.floor( edgeSize / 10 ); // Floored because non-integer stroke-weights create strange artifacts in Chrome and possibly other browsers
+    this.nodes.forEach( node => {
+      node.neighbors.forEach( neighbor => {
+        ctx.beginPath( );
+        ctx.moveTo( node.screenpos.x, node.screenpos.y );
+        ctx.lineTo( neighbor.screenpos.x, neighbor.screenpos.y );
+        ctx.stroke( );
+      } );
+    } );
+    this.nodes.forEach( node => {
+      ctx.beginPath( );
+      ctx.arc( node.screenpos.x, node.screenpos.y, edgeSize / 4, 0, 2 * Math.PI )
+      ctx.fill( );
+      ctx.stroke( );
+    } );
+  }
 }
 
-const LATTICE = new Lattice( );
+LATTICE = new Lattice( );
 
 function loop( time ) {
-  
+  ctx.fillStyle = "black";
+  ctx.fillRect( 0, 0, width, height );
+  LATTICE.draw( );
   requestAnimationFrame( loop );
 }
 
