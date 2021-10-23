@@ -1,2 +1,3 @@
 # Lattice
  
+A board game
