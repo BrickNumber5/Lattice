@@ -3,7 +3,27 @@
 const BOARDSIZE = 9;
 let edgeSize;
 
+const PLAYERS = 2;
+let turn = 0;
+
+const COLORS = {
+  players: [
+    {
+      light: "#ff7400",
+      dark: "#c45900",
+      highlight: "#ff963f88"
+    },
+    {
+      light: "#008bff",
+      dark: "#0061b2",
+      highlight: "#49a0e888"
+    }
+  ]
+};
+
 let LATTICE;
+
+let hoveredNode = null;
 
 const cnv = document.querySelector( ".main" );
 const ctx = cnv.getContext( "2d" );
@@ -36,6 +56,17 @@ function coordinate( vector ) {
   return x + "|" + y + "|" + z;
 }
 
+function screenPos( vector ) {
+  let { x, y, z } = vector;
+  x -= ( BOARDSIZE - 1 ) / 2 + ( BOARDSIZE - 1 ) / 4;
+  y += ( BOARDSIZE - 1 ) / 4;
+  z += ( BOARDSIZE - 1 ) / 2;
+  return {
+    x: ( width  / 2 ) + edgeSize * ( x * Math.cos( 2 * Math.PI / 6 ) + y * Math.cos( 2 * Math.PI / 3 ) ),
+    y: ( height / 2 ) - edgeSize * ( x * Math.sin( 2 * Math.PI / 6 ) + y * Math.sin( 2 * Math.PI / 3 ) )
+  };
+}
+
 class Node {
   constructor( lattice, x, y, z ) {
     this.lattice = lattice;
@@ -55,14 +86,7 @@ class Node {
     );
   }
   calculateScreenPos( ) {
-    let { x, y, z } = this;
-    x -= 6;
-    y += 2;
-    z += 4;
-    this.screenpos = {
-      x: ( width  / 2 ) + edgeSize * ( x * Math.cos( 2 * Math.PI / 6 ) + y * Math.cos( 2 * Math.PI / 3 ) ),
-      y: ( height / 2 ) - edgeSize * ( x * Math.sin( 2 * Math.PI / 6 ) + y * Math.sin( 2 * Math.PI / 3 ) )
-    };
+    this.screenpos = screenPos( this );
   }
 }
 
@@ -85,7 +109,7 @@ class Lattice {
   draw( ) {
     ctx.fillStyle = "black";
     ctx.strokeStyle = "white";
-    ctx.lineWidth = Math.floor( edgeSize / 10 ); // Floored because non-integer stroke-weights create strange artifacts in Chrome and possibly other browsers
+    ctx.lineWidth = Math.floor( edgeSize / 15 ); // Floored because non-integer stroke-weights create strange artifacts in Chrome and possibly other browsers
     this.nodes.forEach( node => {
       node.neighbors.forEach( neighbor => {
         ctx.beginPath( );
@@ -96,8 +120,13 @@ class Lattice {
     } );
     this.nodes.forEach( node => {
       ctx.beginPath( );
-      ctx.arc( node.screenpos.x, node.screenpos.y, edgeSize / 4, 0, 2 * Math.PI )
+      ctx.arc( node.screenpos.x, node.screenpos.y, edgeSize / 4, 0, 2 * Math.PI );
       ctx.fill( );
+      if ( node === hoveredNode ) {
+        ctx.fillStyle = COLORS.players[ turn ].highlight;
+        ctx.fill( );
+        ctx.fillStyle = "black";
+      }
       ctx.stroke( );
     } );
   }
@@ -113,3 +142,14 @@ function loop( time ) {
 }
 
 requestAnimationFrame( loop );
+
+window.onmousemove = e => {
+  let x = e.clientX;
+  let y = e.clientY;
+  hoveredNode = null;
+  LATTICE?.nodes?.forEach( node => {
+    if ( ( x - node.screenpos.x ) ** 2 + ( y - node.screenpos.y ) ** 2 <= ( edgeSize / 2 ) ** 2 ) {
+      hoveredNode = node;
+    }
+  } );
+};
