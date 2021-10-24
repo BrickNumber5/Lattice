@@ -6,6 +6,11 @@ let edgeSize;
 const PLAYERS = 2;
 let turn = 0;
 
+let turnNumber = 0;
+
+const STARTINGAP = 2;
+let ap = 2;
+
 const COLORS = {
   players: [
     {
@@ -22,6 +27,7 @@ const COLORS = {
 let LATTICE;
 
 let hoveredNode = null;
+let selectedNode = null;
 
 const cnv = document.querySelector( ".main" );
 const ctx = cnv.getContext( "2d" );
@@ -151,8 +157,8 @@ class Node {
   }
   findNeighbors( ) {
     const { lattice } = this;
-    this.neighbors = new Map(
-      this.getNeighborVectors( ).map( vec => [ coordinate( vec ), lattice.getNodeAt( vec ) ] ).filter( neighbor => neighbor[ 1 ] != undefined )
+    this.neighbors = new Set(
+      this.getNeighborVectors( ).map( vec => lattice.getNodeAt( vec ) ).filter( neighbor => neighbor != undefined )
     );
   }
   calculateScreenPos( ) {
@@ -215,7 +221,13 @@ class Lattice {
     this.nodes.forEach( node => {
       ctx.beginPath( );
       ctx.arc( node.screenpos.x, node.screenpos.y, edgeSize / 4, 0, 2 * Math.PI );
-      ctx.stroke( );
+      if ( node === selectedNode ) {
+        ctx.strokeStyle = COLORS.players[ turn ].main;
+        ctx.stroke( );
+        ctx.strokeStyle = "white";
+      } else {
+        ctx.stroke( );
+      }
     } );
   }
 }
@@ -223,8 +235,12 @@ class Lattice {
 LATTICE = new Lattice( );
 
 function nextTurn( ) {
-  
-  turn = ( turn + 1 ) % PLAYERS;
+  ap = STARTINGAP;
+  turn++;
+  if ( turn >= PLAYERS ) {
+    turn %= PLAYERS;
+    turnNumber++;
+  }
 }
 
 function loop( time ) {
@@ -246,3 +262,66 @@ window.onmousemove = e => {
     }
   } );
 };
+
+window.onclick = e => {
+  let x = e.clientX;
+  let y = e.clientY;
+  if ( selectedNode ) {
+    if ( selectedNode.piece ) {
+      let newNode = null;
+      LATTICE?.nodes?.forEach( node => {
+        if ( ( x - node.screenpos.x ) ** 2 + ( y - node.screenpos.y ) ** 2 <= ( edgeSize / 2 ) ** 2 ) {
+          newNode = node;
+        }
+      } );
+      if ( newNode ) {
+        if ( selectedNode.piece.range === 0 ) {
+          if ( selectedNode.neighbors.has( newNode ) && newNode.piece === null ) {
+            ap--;
+            newNode.piece = selectedNode.piece;
+            selectedNode.piece = null;
+            newNode.piece.node = newNode;
+          }
+        } else if ( selectedNode.piece.range === 1 ) {
+          ap--;
+          if ( selectedNode === newNode ) {
+            selectedNode.piece.target = null;
+          } else {
+            let sv = { x: selectedNode.x, y: selectedNode.y, z: selectedNode.z };
+            let nv = { x: newNode.x, y: newNode.y, z: newNode.z };
+            let tv = { x: nv.x - sv.x, y: nv.y - sv.y, z: nv.z - sv.z };
+            let m = gcd( gcd( tv.x, tv.y ), tv.z );
+            if ( m > 1 ) {
+              tv.x /= m;
+              tv.y /= m;
+              tv.z /= m;
+            }
+            selectedNode.piece.target = tv;
+          }
+        }
+      }
+    } else {
+      
+    }
+    selectedNode = null;
+  } else {
+  selectedNode = null;
+    if ( ap > 0 ) {
+      LATTICE?.nodes?.forEach( node => {
+        if ( ( x - node.screenpos.x ) ** 2 + ( y - node.screenpos.y ) ** 2 <= ( edgeSize / 2 ) ** 2 ) {
+          if ( node.piece === null || ( node.piece.owner === turn && node.piece.type !== -1 ) ) {
+            selectedNode = node;
+          }
+        }
+      } );
+    }
+  }
+};
+
+function gcd( a, b ) {
+  if ( b ) {
+    return gcd( b, a % b );
+  } else {
+    return Math.abs( a );
+  }
+}
