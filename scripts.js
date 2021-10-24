@@ -9,13 +9,11 @@ let turn = 0;
 const COLORS = {
   players: [
     {
-      light: "#ff7400",
-      dark: "#c45900",
+      main: "#ff7400",
       highlight: "#ff963f88"
     },
     {
-      light: "#008bff",
-      dark: "#0061b2",
+      main: "#008bff",
       highlight: "#49a0e888"
     }
   ]
@@ -83,7 +81,7 @@ class Piece {
     return { x: wx * invlen, y: -wy * invlen };
   }
   drawAnnotations( ) {
-    ctx.strokeStyle = COLORS.players[ this.owner ].light;
+    ctx.strokeStyle = COLORS.players[ this.owner ].main;
     ctx.lineWidth = Math.floor( edgeSize / 15 );
     if ( this.range === 0 ) {
       ctx.beginPath( );
@@ -99,24 +97,24 @@ class Piece {
     }
   }
   drawPiece( ) {
-    ctx.fillStyle = COLORS.players[ this.owner ].dark;
-    ctx.strokeStyle = COLORS.players[ this.owner ].dark;
+    ctx.fillStyle = COLORS.players[ this.owner ].main;
+    ctx.strokeStyle = COLORS.players[ this.owner ].main;
     let { x, y } = this.node.screenpos;
     if ( this.type === 0 ) {
       ctx.beginPath( );
-      ctx.moveTo( x, y + edgeSize / 4 );
-      ctx.lineTo( x + edgeSize / 4, y );
-      ctx.lineTo( x, y - edgeSize / 4 );
-      ctx.lineTo( x - edgeSize / 4, y );
+      ctx.moveTo( x, y + edgeSize / 6 );
+      ctx.lineTo( x + edgeSize * Math.cos( -Math.PI / 6 ) / 6, y + edgeSize * Math.sin( -Math.PI / 6 ) / 6 );
+      ctx.lineTo( x - edgeSize * Math.cos( -Math.PI / 6 ) / 6, y + edgeSize * Math.sin( -Math.PI / 6 ) / 6 );
+      ctx.moveTo( x, y - edgeSize / 6 );
+      ctx.lineTo( x - edgeSize * Math.cos( -Math.PI / 6 ) / 6, y - edgeSize * Math.sin( -Math.PI / 6 ) / 6 );
+      ctx.lineTo( x + edgeSize * Math.cos( -Math.PI / 6 ) / 6, y - edgeSize * Math.sin( -Math.PI / 6 ) / 6 );
       ctx.fill( );
     } else if ( this.type === 1 ) {
       ctx.beginPath( );
-      ctx.moveTo( x, y + edgeSize / 5 );
-      ctx.lineTo( x + edgeSize * Math.cos( Math.PI / 6 ) / 5, y + edgeSize * Math.sin( Math.PI / 6 ) / 5 );
-      ctx.lineTo( x + edgeSize * Math.cos( -Math.PI / 6 ) / 5, y + edgeSize * Math.sin( -Math.PI / 6 ) / 5 );
-      ctx.lineTo( x, y - edgeSize / 5 );
-      ctx.lineTo( x - edgeSize * Math.cos( -Math.PI / 6 ) / 5, y + edgeSize * Math.sin( -Math.PI / 6 ) / 5 );
-      ctx.lineTo( x - edgeSize * Math.cos( Math.PI / 6 ) / 5, y + edgeSize * Math.sin( Math.PI / 6 ) / 5 );
+      ctx.moveTo( x, y + edgeSize / 6 );
+      ctx.lineTo( x + edgeSize / 6, y );
+      ctx.lineTo( x, y - edgeSize / 6 );
+      ctx.lineTo( x - edgeSize / 6, y );
       ctx.fill( );
     } else if ( this.type === 2 ) {
       ctx.beginPath( );
