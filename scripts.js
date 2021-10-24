@@ -79,6 +79,9 @@ class Piece {
     this.type = type; // 0 - Offensive, 1 - Defensive, 2 - Supporting, -1 - Neutral
     this.owner = owner;
     this.target = target; // For long range pieces only
+    
+    this.targets = new Set( );
+    this.targettedBy = new Set( );
   }
   getTargetVectorInWorldSpace( ) {
     const { x, y, z } = this.target;
@@ -140,6 +143,37 @@ class Piece {
       ctx.arc( this.node.screenpos.x + edgeSize * wv.x / 3, this.node.screenpos.y + edgeSize * wv.y / 3, edgeSize / 8, 0, 2 * Math.PI );
       ctx.fill( );
     }
+  }
+  calculateTargets( ) {
+    this.targettedBy.clear( );
+    let targets = new Set( );
+    if ( this.range === 0 ) {
+      this.targets = this.node.neighbors.forEach( node => { if ( node.piece ) targets.add( node.piece ); } );
+    } else if ( this.range === 1 ) {
+      let p = { x: this.node.x, y: this.node.y, z: this.node.z };
+      while ( Math.abs( p.x ) < BOARDSIZE && Math.abs( p.y ) < BOARDSIZE && Math.abs( p.z ) < BOARDSIZE ) {
+        p.x += this.target.x;
+        p.y += this.target.y;
+        p.z += this.target.z;
+        let n = this.node.lattice.getNodeAt( p );
+        if ( n && n.piece ) {
+          targets.add( n.piece );
+          break;
+        }
+      }
+    }
+    this.targets = targets;
+  }
+  calculateSupport( exclude = null ) {
+    exclude ??= new Set( );
+    let support = 0n;
+    this.targettedBy.forEach( piece => {
+      if ( piece.type === 2 && !exclude.has( piece ) ) {
+        exclude.add( piece );
+        support += 2n * piece.calculateSupport( exclude ) + 1n;
+      }
+    } );
+    return support;
   }
 }
 
@@ -268,6 +302,19 @@ class Lattice {
 LATTICE = new Lattice( );
 
 function nextTurn( ) {
+  LATTICE.nodes.forEach( node => { node?.piece?.calculateTargets?.( ); } );
+  LATTICE.nodes.forEach( node => { if ( node.piece ) node.piece.targets.forEach( target => target.targettedBy.add( node.piece ) ); } );
+  LATTICE.nodes.forEach( node => { if ( node.piece ) node.piece.support = node.piece.calculateSupport( ); } );
+  LATTICE.nodes.forEach( node => { if ( node.piece ) { node.piece.damage = 0n; node.piece.defense = 0n; } } );
+  LATTICE.nodes.forEach( node => { if ( node.piece ) {
+    if ( node.piece.type === 0 ) node.piece.targets.forEach( t => t.damage += node.piece.support );
+    if ( node.piece.type === 1 ) node.piece.targets.forEach( t => t.defense += node.piece.support );
+  } } );
+  LATTICE.nodes.forEach( node => { if ( node.piece && node.piece.damage > node.piece.defense ) node.piece = null; } );
+  let points = Array.from( { length: PLAYERS }, ( ) => 0 );
+  LATTICE.nodes.forEach( node => { if ( node.piece ) points[ node.piece.owner ]++; } );
+  console.log( points );
+  
   ap = STARTINGAP;
   turn++;
   if ( turn >= PLAYERS ) {
