@@ -28,6 +28,7 @@ let LATTICE;
 
 let hoveredNode = null;
 let selectedNode = null;
+let editingNode = null;
 
 const cnv = document.querySelector( ".main" );
 const ctx = cnv.getContext( "2d" );
@@ -184,6 +185,7 @@ class Lattice {
   }
   draw( ) {
     ctx.fillStyle = "black";
+    ctx.strokeStyle = "white";
     // Edges
     this.nodes.forEach( node => {
       node.neighbors.forEach( neighbor => {
@@ -221,7 +223,7 @@ class Lattice {
     this.nodes.forEach( node => {
       ctx.beginPath( );
       ctx.arc( node.screenpos.x, node.screenpos.y, edgeSize / 4, 0, 2 * Math.PI );
-      if ( node === selectedNode ) {
+      if ( node === selectedNode || node === editingNode ) {
         ctx.strokeStyle = COLORS.players[ turn ].main;
         ctx.stroke( );
         ctx.strokeStyle = "white";
@@ -229,6 +231,37 @@ class Lattice {
         ctx.stroke( );
       }
     } );
+    // Popup
+    if ( selectedNode && selectedNode.piece === null ) {
+      let v = { x: selectedNode.x, y: selectedNode.y, z: selectedNode.z };
+      let { x, y } = selectedNode.screenpos;
+      ctx.fillStyle = "#333";
+      ctx.beginPath( );
+      ctx.moveTo( x + 3 * edgeSize / 2, y );
+      ctx.lineTo( x + 3 * edgeSize * Math.cos( Math.PI / 3 ) / 2, y + 3 * edgeSize * Math.sin( Math.PI / 3 ) / 2 );
+      ctx.lineTo( x + 3 * edgeSize * Math.cos( 2 * Math.PI / 3 ) / 2, y + 3 * edgeSize * Math.sin( 2 * Math.PI / 3 ) / 2 );
+      ctx.lineTo( x - 3 * edgeSize / 2, y );
+      ctx.lineTo( x + 3 * edgeSize * Math.cos( 4 * Math.PI / 3 ) / 2, y + 3 * edgeSize * Math.sin( 4 * Math.PI / 3 ) / 2 );
+      ctx.lineTo( x + 3 * edgeSize * Math.cos( 5 * Math.PI / 3 ) / 2, y + 3 * edgeSize * Math.sin( 5 * Math.PI / 3 ) / 2 );
+      ctx.fill( );
+      // Pieces
+      (new Piece( { screenpos: screenPos( { x: v.x, y: v.y, z: v.z } ) }, -1, -1, turn )).drawPiece( );
+      if ( ap > 1 ) {
+        (new Piece( { screenpos: screenPos( { x: v.x, y: v.y + 1, z: v.z - 1 } ) }, 0, 0, turn )).drawPiece( );
+        (new Piece( { screenpos: screenPos( { x: v.x + 1, y: v.y, z: v.z - 1 } ) }, 0, 1, turn )).drawPiece( );
+        (new Piece( { screenpos: screenPos( { x: v.x + 1, y: v.y - 1, z: v.z } ) }, 0, 2, turn )).drawPiece( );
+        (new Piece( { screenpos: screenPos( { x: v.x, y: v.y - 1, z: v.z + 1 } ) }, 1, 0, turn, { x: 0, y: -1, z: 1 } )).drawPiece( );
+        (new Piece( { screenpos: screenPos( { x: v.x - 1, y: v.y, z: v.z + 1 } ) }, 1, 1, turn, { x: 0, y: -1, z: 1 } )).drawPiece( );
+        (new Piece( { screenpos: screenPos( { x: v.x - 1, y: v.y + 1, z: v.z } ) }, 1, 2, turn, { x: 0, y: -1, z: 1 } )).drawPiece( );
+      }
+      // Hover
+      if ( hoveredNode ) {
+        ctx.fillStyle = COLORS.players[ turn ].highlight;
+        ctx.beginPath( );
+        ctx.arc( hoveredNode.screenpos.x, hoveredNode.screenpos.y, edgeSize / 4, 0, 2 * Math.PI );
+        ctx.fill( );
+      }
+    }
   }
 }
 
@@ -256,17 +289,36 @@ window.onmousemove = e => {
   let x = e.clientX;
   let y = e.clientY;
   hoveredNode = null;
-  LATTICE?.nodes?.forEach( node => {
-    if ( ( x - node.screenpos.x ) ** 2 + ( y - node.screenpos.y ) ** 2 <= ( edgeSize / 2 ) ** 2 ) {
-      hoveredNode = node;
+  if ( selectedNode === null || selectedNode.piece !== null ) {
+    LATTICE?.nodes?.forEach( node => {
+      if ( ( x - node.screenpos.x ) ** 2 + ( y - node.screenpos.y ) ** 2 <= ( edgeSize / 2 ) ** 2 ) {
+        hoveredNode = node;
+      }
+    } );
+  } else {
+    let { x: nx, y: ny, z: nz } = selectedNode;
+    if ( ap > 1 ) {
+      NEIGHBORDIRECTIONS.forEach( neighbor => {
+        let sp = screenPos( { x: nx + neighbor.x, y: ny + neighbor.y, z: nz + neighbor.z } );
+        if ( ( x - sp.x ) ** 2 + ( y - sp.y ) ** 2 <= ( edgeSize / 2 ) ** 2 ) {
+          hoveredNode = { screenpos: sp };
+        }
+      } );
     }
-  } );
+    let sp = screenPos( { x: nx, y: ny, z: nz } );
+    if ( ( x - sp.x ) ** 2 + ( y - sp.y ) ** 2 <= ( edgeSize / 2 ) ** 2 ) {
+      hoveredNode = { screenpos: sp };
+    }
+  }
 };
 
 window.onclick = e => {
   let x = e.clientX;
   let y = e.clientY;
-  if ( selectedNode ) {
+  if ( selectedNode || editingNode ) {
+    if ( editingNode ) {
+      selectedNode = editingNode;
+    }
     if ( selectedNode.piece ) {
       let newNode = null;
       LATTICE?.nodes?.forEach( node => {
@@ -283,7 +335,7 @@ window.onclick = e => {
             newNode.piece.node = newNode;
           }
         } else if ( selectedNode.piece.range === 1 ) {
-          ap--;
+          if ( editingNode === null ) ap--;
           if ( selectedNode === newNode ) {
             selectedNode.piece.target = null;
           } else {
@@ -298,14 +350,42 @@ window.onclick = e => {
             }
             selectedNode.piece.target = tv;
           }
+          editingNode = null;
         }
       }
     } else {
-      
+      let { x: nx, y: ny, z: nz } = selectedNode;
+      let clicked = -1;
+      if ( ap > 1 ) {
+        NEIGHBORDIRECTIONS.forEach( ( neighbor, i ) => {
+          let sp = screenPos( { x: nx + neighbor.x, y: ny + neighbor.y, z: nz + neighbor.z } );
+          if ( ( x - sp.x ) ** 2 + ( y - sp.y ) ** 2 <= ( edgeSize / 2 ) ** 2 ) {
+            clicked = i;
+          }
+        } );
+      }
+      let sp = screenPos( { x: nx, y: ny, z: nz } );
+      if ( ( x - sp.x ) ** 2 + ( y - sp.y ) ** 2 <= ( edgeSize / 2 ) ** 2 ) {
+        clicked = 6;
+      }
+      if ( clicked !== -1 ) {
+        if ( clicked === 6 ) {
+          ap--;
+          selectedNode.piece = new Piece( selectedNode, -1, -1, turn );
+        } else {
+          ap -= 2;
+          if ( clicked === 5 || clicked === 4 || clicked === 2 ) {
+            selectedNode.piece = new Piece( selectedNode, 0, [ 5, 4, 2 ].indexOf( clicked ), turn );
+          } else {
+            selectedNode.piece = new Piece( selectedNode, 1, [ 3, 1, 0 ].indexOf( clicked ), turn );
+            editingNode = selectedNode;
+          }
+        }
+      }
     }
     selectedNode = null;
   } else {
-  selectedNode = null;
+    selectedNode = null;
     if ( ap > 0 ) {
       LATTICE?.nodes?.forEach( node => {
         if ( ( x - node.screenpos.x ) ** 2 + ( y - node.screenpos.y ) ** 2 <= ( edgeSize / 2 ) ** 2 ) {
