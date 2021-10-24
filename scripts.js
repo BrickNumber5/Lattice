@@ -67,12 +67,84 @@ function screenPos( vector ) {
   };
 }
 
+class Piece {
+  constructor( node, range, type, owner, target = null ) {
+    this.node = node;
+    this.range = range; // 0 - Short, 1 - Long, -1 - Neutral
+    this.type = type; // 0 - Offensive, 1 - Defensive, 2 - Supporting, -1 - Neutral
+    this.owner = owner;
+    this.target = target; // For long range pieces only
+  }
+  getTargetVectorInWorldSpace( ) {
+    const { x, y, z } = this.target;
+    const wx = x * Math.cos( 2 * Math.PI / 6 ) + y * Math.cos( 2 * Math.PI / 3 );
+    const wy = x * Math.sin( 2 * Math.PI / 6 ) + y * Math.sin( 2 * Math.PI / 3 );
+    const invlen = 1 / Math.sqrt( wx ** 2 + wy ** 2 );
+    return { x: wx * invlen, y: wy * invlen };
+  }
+  drawAnnotations( ) {
+    ctx.strokeStyle = COLORS.players[ this.owner ].light;
+    ctx.lineWidth = Math.floor( edgeSize / 15 );
+    if ( this.range === 0 ) {
+      ctx.beginPath( );
+      ctx.arc( this.node.screenpos.x, this.node.screenpos.y, edgeSize, 0, 2 * Math.PI )
+      ctx.stroke( );
+    } else if ( this.range === 1 && this.target !== null ) {
+      let wv = this.getTargetVectorInWorldSpace( );
+      let dist = 2 * Math.max( width, height );
+      ctx.beginPath( );
+      ctx.moveTo( this.node.screenpos.x, this.node.screenpos.y );
+      ctx.lineTo( this.node.screenpos.x + wv.x * dist, this.node.screenpos.y + wv.y * dist );
+      ctx.stroke( );
+    }
+  }
+  drawPiece( ) {
+    ctx.fillStyle = COLORS.players[ this.owner ].dark;
+    ctx.strokeStyle = COLORS.players[ this.owner ].dark;
+    let { x, y } = this.node.screenpos;
+    if ( this.type === 0 ) {
+      ctx.beginPath( );
+      ctx.moveTo( x, y + edgeSize / 4 );
+      ctx.lineTo( x + edgeSize / 4, y );
+      ctx.lineTo( x, y - edgeSize / 4 );
+      ctx.lineTo( x - edgeSize / 4, y );
+      ctx.fill( );
+    } else if ( this.type === 1 ) {
+      ctx.beginPath( );
+      ctx.moveTo( x, y + edgeSize / 5 );
+      ctx.lineTo( x + edgeSize * Math.cos( Math.PI / 6 ) / 5, y + edgeSize * Math.sin( Math.PI / 6 ) / 5 );
+      ctx.lineTo( x + edgeSize * Math.cos( -Math.PI / 6 ) / 5, y + edgeSize * Math.sin( -Math.PI / 6 ) / 5 );
+      ctx.lineTo( x, y - edgeSize / 5 );
+      ctx.lineTo( x - edgeSize * Math.cos( -Math.PI / 6 ) / 5, y + edgeSize * Math.sin( -Math.PI / 6 ) / 5 );
+      ctx.lineTo( x - edgeSize * Math.cos( Math.PI / 6 ) / 5, y + edgeSize * Math.sin( Math.PI / 6 ) / 5 );
+      ctx.fill( );
+    } else if ( this.type === 2 ) {
+      ctx.beginPath( );
+      ctx.arc( x, y, edgeSize / 6, 0, 2 * Math.PI );
+      ctx.fill( );
+    } else if ( this.type === -1 ) {
+      ctx.lineWidth = Math.floor( edgeSize / 15 );
+      ctx.beginPath( );
+      ctx.arc( x, y, edgeSize / 8, 0, 2 * Math.PI );
+      ctx.stroke( );
+    }
+    
+    if ( this.range === 1 && this.target !== null ) {
+      let wv = this.getTargetVectorInWorldSpace( );
+      ctx.beginPath( );
+      ctx.arc( this.node.screenpos.x + edgeSize * wv.x / 3, this.node.screenpos.y + edgeSize * wv.y / 3, edgeSize / 8, 0, 2 * Math.PI );
+      ctx.fill( );
+    }
+  }
+}
+
 class Node {
   constructor( lattice, x, y, z ) {
     this.lattice = lattice;
     this.x = x;
     this.y = y;
     this.z = z;
+    this.piece = null;
     this.calculateScreenPos( );
   }
   getNeighborVectors( ) {
@@ -108,8 +180,7 @@ class Lattice {
   }
   draw( ) {
     ctx.fillStyle = "black";
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = Math.floor( edgeSize / 15 ); // Floored because non-integer stroke-weights create strange artifacts in Chrome and possibly other browsers
+    // Edges
     this.nodes.forEach( node => {
       node.neighbors.forEach( neighbor => {
         ctx.beginPath( );
@@ -118,15 +189,34 @@ class Lattice {
         ctx.stroke( );
       } );
     } );
+    // Piece Annotations
+    this.nodes.forEach( node => {
+      node?.piece?.drawAnnotations?.( );
+    } );
+    // Darken cells
     this.nodes.forEach( node => {
       ctx.beginPath( );
       ctx.arc( node.screenpos.x, node.screenpos.y, edgeSize / 4, 0, 2 * Math.PI );
       ctx.fill( );
-      if ( node === hoveredNode ) {
-        ctx.fillStyle = COLORS.players[ turn ].highlight;
-        ctx.fill( );
-        ctx.fillStyle = "black";
-      }
+      ctx.stroke( );
+    } );
+    // Pieces
+    this.nodes.forEach( node => {
+      node?.piece?.drawPiece?.( );
+    } );
+    // Hover
+    if ( hoveredNode ) {
+      ctx.fillStyle = COLORS.players[ turn ].highlight;
+      ctx.beginPath( );
+      ctx.arc( hoveredNode.screenpos.x, hoveredNode.screenpos.y, edgeSize / 4, 0, 2 * Math.PI );
+      ctx.fill( );
+    }
+    // Cell Borders
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = Math.floor( edgeSize / 15 );
+    this.nodes.forEach( node => {
+      ctx.beginPath( );
+      ctx.arc( node.screenpos.x, node.screenpos.y, edgeSize / 4, 0, 2 * Math.PI );
       ctx.stroke( );
     } );
   }
