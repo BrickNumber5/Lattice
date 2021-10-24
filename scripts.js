@@ -80,7 +80,7 @@ class Piece {
     const wx = x * Math.cos( 2 * Math.PI / 6 ) + y * Math.cos( 2 * Math.PI / 3 );
     const wy = x * Math.sin( 2 * Math.PI / 6 ) + y * Math.sin( 2 * Math.PI / 3 );
     const invlen = 1 / Math.sqrt( wx ** 2 + wy ** 2 );
-    return { x: wx * invlen, y: wy * invlen };
+    return { x: wx * invlen, y: -wy * invlen };
   }
   drawAnnotations( ) {
     ctx.strokeStyle = COLORS.players[ this.owner ].light;
@@ -223,6 +223,11 @@ class Lattice {
 }
 
 LATTICE = new Lattice( );
+
+function nextTurn( ) {
+  
+  turn = ( turn + 1 ) % PLAYERS;
+}
 
 function loop( time ) {
   ctx.fillStyle = "black";
