@@ -9,6 +9,21 @@ const COLORS = {
       name: "Blue",
       main: "#008bff",
       highlight: "#49a0e888"
+    },
+    {
+      name: "Pink",
+      main: "#fa27c0",
+      highlight: "#dc56b8"
+    },
+    {
+      name: "Green",
+      main: "#008a21",
+      highlight: "#3fab59"
+    },
+    {
+      name: "Yellow",
+      main: "#eae14f",
+      highlight: "#f3ed8688"
     }
   ]
 };
@@ -37,7 +52,7 @@ function setPlayers( elem ) {
   PLAYERS = Math.min( Math.max( Math.round( +elem.value ), 2 ), 5 );
 }
 
-function setPlayers( elem ) {
+function setAp( elem ) {
   STARTINGAP = Math.min( Math.max( Math.round( +elem.value ), 2 ), 100 );
 }
 
@@ -46,5 +61,5 @@ function play( ) {
   if ( BOARDSIZE !== 9 ) changes.push( `boardsize=${ BOARDSIZE }` );
   if ( PLAYERS !== 2 ) changes.push( `players=${ PLAYERS }` );
   if ( STARTINGAP !== 2 ) changes.push( `ap=${ STARTINGAP }` );
-  window.location += `play${ changes.length > 0 ? "?" + changes.join( "&" ) : "" }`;
+  window.location = `${ window.location.protocol + "//" + window.location.host + window.location.pathname }play${ changes.length > 0 ? "?" + changes.join( "&" ) : "" }`;
 }

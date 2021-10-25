@@ -3,17 +3,17 @@
 const urlParams = new URLSearchParams( window.location.search );
 
 const BOARDSIZE = Math.min( Math.max( Math.round( +( urlParams.get( "boardsize" ) ?? 9 ) ), 2 ), 25 );
-sessionStorage.setItem( "LATTICE:boardsize", BOARDSIZE );
+sessionStorage.setItem( "LATTICE::boardsize", BOARDSIZE );
 let edgeSize;
 
 const PLAYERS = Math.min( Math.max( Math.round( +( urlParams.get( "players" ) ?? 2 ) ), 2 ), 5 );
-sessionStorage.setItem( "LATTICE:players", PLAYERS );
+sessionStorage.setItem( "LATTICE::players", PLAYERS );
 let turn = 0;
 
 let turnNumber = 0;
 
 const STARTINGAP = Math.min( Math.max( Math.round( +( urlParams.get( "ap" ) ?? 2 ) ), 2 ), 100 );
-sessionStorage.setItem( "LATTICE:ap", STARTINGAP );
+sessionStorage.setItem( "LATTICE::ap", STARTINGAP );
 let ap = STARTINGAP;
 
 {
@@ -34,6 +34,21 @@ const COLORS = {
       name: "Blue",
       main: "#008bff",
       highlight: "#49a0e888"
+    },
+    {
+      name: "Pink",
+      main: "#fa27c0",
+      highlight: "#dc56b8"
+    },
+    {
+      name: "Green",
+      main: "#008a21",
+      highlight: "#3fab59"
+    },
+    {
+      name: "Yellow",
+      main: "#eae14f",
+      highlight: "#f3ed8688"
     }
   ]
 };
@@ -327,8 +342,6 @@ function nextTurn( ) {
     if ( node.piece.type === 1 ) node.piece.targets.forEach( t => t.defense += node.piece.support );
   } } );
   LATTICE.nodes.forEach( node => { if ( node.piece && node.piece.damage > node.piece.defense ) node.piece = null; } );
-  let points = Array.from( { length: PLAYERS }, ( ) => 0 );
-  LATTICE.nodes.forEach( node => { if ( node.piece ) points[ node.piece.owner ]++; } );
   
   ap = STARTINGAP;
   turn++;
@@ -348,6 +361,16 @@ function nextTurn( ) {
   let turndisp = document.querySelector( ".turndisp" );
   turndisp.innerText = turnNumber + 1;
   turndisp.style.color = COLORS.players[ turn ].main;
+  
+  let points = Array.from( { length: PLAYERS }, ( ) => 0 );
+  LATTICE.nodes.forEach( node => { if ( node.piece ) points[ node.piece.owner ]++; } );
+  points = points.map( ( x, i ) => [ i, x ] ).sort( ( a, b ) => b[ 1 ] - a[ 1 ] ).slice( 0, 2 );
+  let first = points[ 0 ];
+  let second = points[ 1 ];
+  if ( first[ 1 ] !== second[ 1 ] && first[ 1 ] - second[ 1 ] > ( ( BOARDSIZE + 1 ) * BOARDSIZE ) / 4 - turnNumber ) {
+    sessionStorage.setItem( "LATTICE::victory", first[ 0 ] );
+    window.location = window.location.protocol + "//" + window.location.host + window.location.pathname + "/..";
+  }
 }
 
 function loop( time ) {
