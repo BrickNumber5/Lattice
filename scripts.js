@@ -1,23 +1,34 @@
 // Lattice Game Main Script
 
-const BOARDSIZE = 9;
+const urlParams = new URLSearchParams( window.location.search );
+
+const BOARDSIZE = Math.min( Math.max( Math.round( +( urlParams.get( "boardsize" ) ?? 9 ) ), 2 ), 25 );
 let edgeSize;
 
-const PLAYERS = 2;
+const PLAYERS = Math.min( Math.max( Math.round( +( urlParams.get( "players" ) ?? 2 ) ), 2 ), 5 );
 let turn = 0;
 
 let turnNumber = 0;
 
-const STARTINGAP = 2;
-let ap = 2;
+const STARTINGAP = Math.min( Math.max( Math.round( +( urlParams.get( "ap" ) ?? 2 ) ), 2 ), 100 );
+let ap = STARTINGAP;
+
+{
+  let apdisp = document.querySelector( ".apdisp" );
+  apdisp.innerText = STARTINGAP;
+  
+  document.querySelector( ".apmax" ).innerText = STARTINGAP;
+}
 
 const COLORS = {
   players: [
     {
+      name: "Orange",
       main: "#ff7400",
       highlight: "#ff963f88"
     },
     {
+      name: "Blue",
       main: "#008bff",
       highlight: "#49a0e888"
     }
@@ -149,7 +160,7 @@ class Piece {
     let targets = new Set( );
     if ( this.range === 0 ) {
       this.targets = this.node.neighbors.forEach( node => { if ( node.piece ) targets.add( node.piece ); } );
-    } else if ( this.range === 1 ) {
+    } else if ( this.range === 1 && this.target !== null ) {
       let p = { x: this.node.x, y: this.node.y, z: this.node.z };
       while ( Math.abs( p.x ) < BOARDSIZE && Math.abs( p.y ) < BOARDSIZE && Math.abs( p.z ) < BOARDSIZE ) {
         p.x += this.target.x;
@@ -302,6 +313,8 @@ class Lattice {
 LATTICE = new Lattice( );
 
 function nextTurn( ) {
+  selectedNode = null;
+  editingNode = null;
   LATTICE.nodes.forEach( node => { node?.piece?.calculateTargets?.( ); } );
   LATTICE.nodes.forEach( node => { if ( node.piece ) node.piece.targets.forEach( target => target.targettedBy.add( node.piece ) ); } );
   LATTICE.nodes.forEach( node => { if ( node.piece ) node.piece.support = node.piece.calculateSupport( ); } );
@@ -313,7 +326,6 @@ function nextTurn( ) {
   LATTICE.nodes.forEach( node => { if ( node.piece && node.piece.damage > node.piece.defense ) node.piece = null; } );
   let points = Array.from( { length: PLAYERS }, ( ) => 0 );
   LATTICE.nodes.forEach( node => { if ( node.piece ) points[ node.piece.owner ]++; } );
-  console.log( points );
   
   ap = STARTINGAP;
   turn++;
@@ -321,6 +333,18 @@ function nextTurn( ) {
     turn %= PLAYERS;
     turnNumber++;
   }
+  
+  let playerdisp = document.querySelector( ".playerdisp" );
+  playerdisp.innerText = COLORS.players[ turn ].name;
+  playerdisp.style.color = COLORS.players[ turn ].main;
+  
+  let apdisp = document.querySelector( ".apdisp" );
+  apdisp.innerText = STARTINGAP;
+  apdisp.style.color = COLORS.players[ turn ].main;
+  
+  let turndisp = document.querySelector( ".turndisp" );
+  turndisp.innerText = turnNumber + 1;
+  turndisp.style.color = COLORS.players[ turn ].main;
 }
 
 function loop( time ) {
@@ -377,12 +401,16 @@ window.onclick = e => {
         if ( selectedNode.piece.range === 0 ) {
           if ( selectedNode.neighbors.has( newNode ) && newNode.piece === null ) {
             ap--;
+            updateApDisp( );
             newNode.piece = selectedNode.piece;
             selectedNode.piece = null;
             newNode.piece.node = newNode;
           }
         } else if ( selectedNode.piece.range === 1 ) {
-          if ( editingNode === null ) ap--;
+          if ( editingNode === null ) {
+            ap--;
+            updateApDisp( );
+          }
           if ( selectedNode === newNode ) {
             selectedNode.piece.target = null;
           } else {
@@ -418,9 +446,11 @@ window.onclick = e => {
       if ( clicked !== -1 ) {
         if ( clicked === 6 ) {
           ap--;
+          updateApDisp( );
           selectedNode.piece = new Piece( selectedNode, -1, -1, turn );
         } else {
           ap -= 2;
+          updateApDisp( );
           if ( clicked === 5 || clicked === 4 || clicked === 2 ) {
             selectedNode.piece = new Piece( selectedNode, 0, [ 5, 4, 2 ].indexOf( clicked ), turn );
           } else {
@@ -444,6 +474,10 @@ window.onclick = e => {
     }
   }
 };
+
+function updateApDisp( ) {
+  document.querySelector( ".apdisp" ).innerText = ap;
+}
 
 function gcd( a, b ) {
   if ( b ) {

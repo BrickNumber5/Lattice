@@ -9,3 +9,54 @@ body {
 .main {
   display: block;
 }
+
+.bar {
+  display: flex;
+  position: absolute;
+  height: 5rem;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.turnnumber {
+  font-size: 3rem;
+  color: white;
+}
+
+.turndisp {
+  font-weight: bold;
+}
+
+.player {
+  font-size: 3rem;
+  color: white;
+}
+
+.playerdisp {
+  font-weight: bold;
+}
+
+.ap {
+  font-size: 3rem;
+  color: white;
+}
+
+.apdisp {
+  font-weight: bold;
+}
+
+.endTurn {
+  font-size: 2rem;
+  color: white;
+  padding: 0.5rem;
+  border: solid white 0.3rem;
+  cursor: pointer;
+}
+
+.endTurn:hover, .endTurn:focus {
+  background-color: white;
+  color: black;
+}
