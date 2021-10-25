@@ -3,14 +3,17 @@
 const urlParams = new URLSearchParams( window.location.search );
 
 const BOARDSIZE = Math.min( Math.max( Math.round( +( urlParams.get( "boardsize" ) ?? 9 ) ), 2 ), 25 );
+sessionStorage.setItem( "LATTICE:boardsize", BOARDSIZE );
 let edgeSize;
 
 const PLAYERS = Math.min( Math.max( Math.round( +( urlParams.get( "players" ) ?? 2 ) ), 2 ), 5 );
+sessionStorage.setItem( "LATTICE:players", PLAYERS );
 let turn = 0;
 
 let turnNumber = 0;
 
 const STARTINGAP = Math.min( Math.max( Math.round( +( urlParams.get( "ap" ) ?? 2 ) ), 2 ), 100 );
+sessionStorage.setItem( "LATTICE:ap", STARTINGAP );
 let ap = STARTINGAP;
 
 {

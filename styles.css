@@ -60,3 +60,58 @@ body {
   background-color: white;
   color: black;
 }
+
+.titlewrapper {
+  display: flex;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: space-around;
+  flex-direction: column;
+}
+
+h1 {
+  display: block;
+  text-align: center;
+  font-size: 5rem;
+  color: white;
+  padding: 2rem;
+}
+
+h2 {
+  display: block;
+  text-align: center;
+  font-size: 4rem;
+  color: white;
+  padding: 2rem;
+}
+
+.winnerdisp {
+  font-weight: bold;
+}
+
+.options {
+  color: white;
+  font-size: 3rem;
+}
+
+.options input {
+  display: inline-block;
+  text-align: center;
+  width: 8rem;
+  border-bottom: solid white 0.6rem;
+}
+
+.play {
+  display: block;
+  font-size: 4rem;
+  color: white;
+  padding: 1rem;
+  border: solid white 0.6rem;
+  cursor: pointer;
+}
+
+.play:hover, .play:focus {
+  background-color: white;
+  color: black;
+}
