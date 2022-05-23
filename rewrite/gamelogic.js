@@ -55,6 +55,17 @@ export class Board {
     }
     ctx.stroke();
     
+    
+    let dash = d * 2 * Math.PI / 36;
+    ctx.setLineDash([dash, 2 * dash]);
+    ctx.lineCap = "round";
+    ctx.lineDashOffset = -(ticks % 10000) * 2 * Math.PI * d / 10000;
+    for (let [_, node] of this.#nodes) {
+      node.drawTargets(cnv, ctx, ticks, d);
+    }
+    ctx.setLineDash([]);
+    ctx.lineCap = "butt";
+    
     for (let [_, node] of this.#nodes) {
       node.draw(cnv, ctx, ticks, d);
     }
@@ -96,12 +107,21 @@ class Node {
     this.#piece = new Piece(this, player, range, spec);
   }
   
-  draw(cnv, ctx, ticks, d) {
-    ctx.beginPath();
+  drawTargets(cnv, ctx, ticks, d) {
     const {x, y} = this.#board.boardToScreen(this.#u, this.#v, cnv.width, d);
+    this.#piece?.drawTargets?.(cnv, ctx, ticks, d, x, y);
+  }
+  
+  draw(cnv, ctx, ticks, d) {
+    const {x, y} = this.#board.boardToScreen(this.#u, this.#v, cnv.width, d);
+    
+    ctx.strokeStyle = "#ddd";
+    ctx.beginPath();
     ctx.arc(x, y, 7 * d / 24, 0, 2 * Math.PI);
     ctx.fill();
     ctx.stroke();
+    
+    this.#piece?.draw?.(cnv, ctx, ticks, d, x, y);
   }
 }
 
@@ -119,20 +139,42 @@ class Piece {
     this.#targetVector = null;
   }
   
-  draw(dat, ctx, ticks) {
+  draw(cnv, ctx, ticks, d) {
     
+  }
+  
+  drawTargets(cnv, ctx, ticks, d, x, y) {
+    ctx.strokeStyle = "#3cc";
+    if (this.#range === 0) {
+      ctx.beginPath();
+      ctx.arc(x, y, d, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+    if (this.#range === 1) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y - cnv.height);
+      ctx.stroke();
+    }
   }
 }
 
-let pTime = -1;
-export function loop(cTime) {
-  if (pTime == -1) {
-    pTime = cTime;
-    requestAnimationFrame(loop);
-    return;
-  }
-  let elapsedTime = cTime - pTime;
-  pTime = cTime;
+export function loop(time) {
+  ctx.clearRect(0, 0, c.width, c.height);
+  
+  b.draw(c, ctx, time);
   
   requestAnimationFrame(loop);
 }
+
+
+let b = new Board(9);
+let c = document.querySelector(".board");
+c.width = 600;
+c.height = 600;
+let ctx = c.getContext("2d");
+b.at(2, 3).place(0, 0, 0);
+b.at(1, 3).place(0, 0, 0);
+b.at(2, 2).place(0, 0, 0);
+b.at(3, 3).place(0, 1, 1);
+loop();
