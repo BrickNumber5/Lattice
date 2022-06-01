@@ -59,7 +59,7 @@ export class Board {
     let dash = d * 2 * Math.PI / 36;
     ctx.setLineDash([dash, 2 * dash]);
     ctx.lineCap = "round";
-    ctx.lineDashOffset = -(ticks % 10000) * 2 * Math.PI * d / 10000;
+    ctx.lineDashOffset = -(ticks % 30000) * 2 * Math.PI * d / 30000;
     for (let [_, node] of this.#nodes) {
       node.drawTargets(cnv, ctx, ticks, d);
     }
@@ -158,23 +158,3 @@ class Piece {
     }
   }
 }
-
-export function loop(time) {
-  ctx.clearRect(0, 0, c.width, c.height);
-  
-  b.draw(c, ctx, time);
-  
-  requestAnimationFrame(loop);
-}
-
-
-let b = new Board(9);
-let c = document.querySelector(".board");
-c.width = 600;
-c.height = 600;
-let ctx = c.getContext("2d");
-b.at(2, 3).place(0, 0, 0);
-b.at(1, 3).place(0, 0, 0);
-b.at(2, 2).place(0, 0, 0);
-b.at(3, 3).place(0, 1, 1);
-loop();
