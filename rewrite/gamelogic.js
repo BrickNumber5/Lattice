@@ -239,9 +239,39 @@ export class Player {
   }
   
   drawPiece(cnv, ctx, ticks, d, x, y, piece) {
-    ctx.fillStyle = this.#color;
-    ctx.beginPath();
-    ctx.arc(x, y, d / 5, 0, 2 * Math.PI);
-    ctx.fill();
+    const {info} = piece;
+    if (info.spec === 0) {
+      ctx.fillStyle = this.#color;
+      ctx.beginPath();
+      ctx.arc(x, y, d / 6, 0, 2 * Math.PI);
+      ctx.fill();
+    } else if (info.spec === 1) {
+      ctx.fillStyle = this.#color;
+      const cos = Math.cos(Math.PI / 6),
+            sin = Math.sin(Math.PI / 6);
+      ctx.beginPath();
+      ctx.moveTo(x, y - d / 5);
+      ctx.lineTo(x - d * cos / 5, y + d * sin / 5);
+      ctx.lineTo(x + d * cos / 5, y + d * sin / 5);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x, y + d / 5);
+      ctx.lineTo(x - d * cos / 5, y - d * sin / 5);
+      ctx.lineTo(x + d * cos / 5, y - d * sin / 5);
+      ctx.fill();
+    } else if (info.spec === 2) {
+      ctx.fillStyle = this.#color;
+      ctx.beginPath();
+      ctx.moveTo(x, y - d / 5);
+      ctx.lineTo(x + d / 5, y);
+      ctx.lineTo(x, y + d / 5);
+      ctx.lineTo(x - d / 5, y);
+      ctx.fill();
+    } else if (info.spec === -1) {
+      ctx.strokeStyle = this.#color;
+      ctx.beginPath();
+      ctx.arc(x, y, d / 8, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
   }
 }
