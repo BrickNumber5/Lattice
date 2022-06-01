@@ -4,8 +4,39 @@
     <title>Lattice (Rewrite WIP)</title>
     <script src="index.js" type="module"></script>
     <link rel="stylesheet" href="style.css"></link>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&display=swap" rel="stylesheet">
   </head>
   <body>
-    <canvas class="board"></canvas>
+    <div class="game">
+      <div class="header">
+        <button class="menu-btn"></button>
+        <span class="name">Lattice</span>
+        <span class="author-line">by BrickNumber5</span>
+      </div>
+      <div class="board">
+      <canvas></canvas>
+      </div>
+      <div class="footer">
+        <button class="undo-btn"></button>
+        <span class="turn"><span class="label">Turn:&nbsp;</span><span class="data" data-value="1"></span></span>
+        <span class="player"><span class="label">Player:&nbsp;</span><span class="data" data-value="Orange"></span></span>
+        <span class="actions"><span class="label">Actions:&nbsp;</span><span class="data" data-value="2"></span></span>
+        <button class="next-turn-btn"></button>
+      </div>
+    </div>
+    <div class="menu">
+      <div class="popup">
+        <button class="close-btn"></button>
+        <span class="header">Menu</span>
+        <div class="area" data-title="New Game">
+          <label class="input inp-size">Board Size: <input type="number" value="9"></input></label>
+          <label class="input inp-players">Players: <input type="number" value="2"></input></label>
+          <label class="input inp-actions">Actions/Turn: <input type="number" value="2"></input></label>
+          <button class="btn btn-play">Start</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

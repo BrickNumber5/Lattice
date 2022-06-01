@@ -93,6 +93,10 @@ export class Board {
     this.#undostack.push(undoFn);
   }
   
+  evaluateStep() {
+    // TODO
+  }
+  
   // --- User Callable Functions Below
   
   get actions() {
@@ -155,6 +159,7 @@ export class Board {
     this.#turn %= this.#players.length;
     this.#actions = this.#maxactions;
     this.#undostack = [];
+    this.evaluateStep();
   }
 }
 
