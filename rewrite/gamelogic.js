@@ -93,6 +93,58 @@ export class Board {
     this.#undostack.push(undoFn);
   }
   
+  // --- User Callable Functions Below
+  
+  get actions() {
+    return this.#actions;
+  }
+  
+  place(u, v, range, spec, targetVector) {
+    if (!this.at(u, v) || this.at(u, v).piece) return false;
+    if (this.#actions < 1 || spec !== -1 && this.#actions < 2) return false;
+    this.#actions -= spec === -1 ? 1 : 2;
+    this.at(u, v).place(this.#turn, range, spec, targetVector);
+    this.pushUndo(() => {
+      this.#actions += spec === -1 ? 1 : 2;
+      this.at(u, v).destroy();
+    });
+  }
+  
+  move(ui, vi, uf, vf) {
+    const node = this.at(ui, vi);
+    if (!node) return false;
+    const piece = node.piece;
+    if (!piece || piece.player !== this.#players[this.#turn] || piece.info.range !== 0) return false;
+    const destnode = this.at(uf, vf);
+    if (!destnode || !node.neighbors.has(destnode) || destnode.piece !== null) return false;
+    if (this.#actions < 1) return false;
+    this.#actions--;
+    node.move(destnode);
+    this.pushUndo(() => {
+      this.#actions++;
+      destnode.move(node);
+    });
+  }
+  
+  retarget(ui, vi, ut, vt) {
+    const node = this.at(ui, vi);
+    if (!node) return false;
+    const piece = node.piece;
+    if (!piece || piece.player !== this.#players[this.#turn] || piece.info.range !== 1) return false;
+    if (this.#actions < 1) return false;
+    this.#actions--;
+    const oldTargetVector = piece.targetVector;
+    piece.target({u: ut - ui, v: vt - vi});
+    this.pushUndo(() => {
+      this.#actions++;
+      piece.target(oldTargetVector);
+    });
+  }
+  
+  get canundo() {
+    return this.#undostack.length > 0;
+  }
+  
   undo() {
     if (this.#undostack.length === 0) return null;
     return this.#undostack.pop()();
@@ -137,8 +189,16 @@ class Node {
     }
   }
   
+  get neighbors() {
+    return new Set(this.#neighbors);
+  }
+  
   get board() {
     return this.#board;
+  }
+  
+  get piece() {
+    return this.#piece;
   }
   
   get u() {return this.#u;}
@@ -148,6 +208,7 @@ class Node {
     if (range === 0) {
       return new Set([...this.#neighbors].map(x => x.#piece).filter(x => x !== null));
     } else {
+      if (targetVector.u === 0 && targetVector.v === 0) return new Set();
       for (let i = 1; true; i++) {
         let n = this.#board.at(this.#u + i * targetVector.u, this.#v + i * targetVector.v);
         if (!n) return new Set();
@@ -158,6 +219,19 @@ class Node {
   
   place(playerIndex, range, spec, targetVector = null) {
     this.#piece = new Piece(this, this.#board.players[playerIndex], range, spec, targetVector);
+  }
+  
+  destroy() {
+    const p = this.#piece;
+    p.node = null;
+    this.#piece = null;
+    return p;
+  }
+  
+  move(othernode) {
+    othernode.#piece = this.#piece;
+    othernode.#piece.node = othernode;
+    this.#piece = null;
   }
   
   drawTargets(cnv, ctx, ticks, d) {
@@ -190,6 +264,18 @@ class Piece {
     this.#player = player;
     this.#range = range;
     this.#spec = spec;
+    this.target(targetVector);
+  }
+  
+  get player() {
+    return this.#player;
+  }
+  
+  get targetVector() {
+    return this.#targetVector;
+  }
+  
+  target(targetVector) {
     targetVector ??= {u: 0, v: 0};
     const tGCD = gcd(targetVector.u, targetVector.v);
     this.#targetVector = {u: targetVector.u / tGCD, v: targetVector.v / tGCD};
@@ -201,6 +287,14 @@ class Piece {
   
   get info() {
     return {node: this.#node, player: this.#player, range: this.#range, spec: this.#spec, targetVector: this.#targetVector};
+  }
+  
+  get node() {
+    return this.#node;
+  }
+  
+  set node(n) {
+    return this.#node = n;
   }
   
   drawTargets(cnv, ctx, ticks, d, x, y) {
