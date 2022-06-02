@@ -2,40 +2,32 @@ import * as GAME from "./gamelogic.js";
 import * as UTIL from "./util.js";
 import * as UI from "./ui.js";
 
-window.GAME = GAME;
-window.UTIL = UTIL;
+const allplayers = [
+  new GAME.Player({name: "Orange", color: "#d82"}),
+  new GAME.Player({name: "Blue",   color: "#28d"}),
+  new GAME.Player({name: "Pink",   color: "#d88"}),
+  new GAME.Player({name: "Yellow", color: "#24d"}),
+  new GAME.Player({name: "Green",  color: "#bb2"})
+];
 
-// ---
-/*
-function loop(time) {
-  ctx.clearRect(0, 0, c.width, c.height);
-  
-  b.draw(c, ctx, time);
-  
-  //requestAnimationFrame(loop);
+let board = new GAME.Board({size: 9, maxactions: 2, players: allplayers.slice(0, 2)});
+
+UI.setBoard(board);
+
+{
+  let size;
+  let players;
+  let actions;
+  UI.addMenu(new UI.Menu("Menu", "#menu", [
+    new UI.SubMenu("New Game", [
+      size = new UI.NumberInput("Board Size", 4, 25, 9),
+      players = new UI.NumberInput("Players", 2, 5, 2),
+      actions = new UI.NumberInput("Actions/Turn", 2, 10, 2),
+      new UI.Button("Start", () => {
+        board = new GAME.Board({size: size.value, maxactions: actions.value, players: allplayers.slice(0, players.value)});
+        UI.setBoard(board);
+        UI.closeMenu();
+      })
+    ])
+  ]));
 }
-
-
-let b = new GAME.Board({size: 9, maxactions: 1000, players: [new GAME.Player({color: "#d82"}), new GAME.Player({color: "#28d"})]});
-let c = document.querySelector(".board canvas");
-c.width = 600;
-c.height = 600;
-let ctx = c.getContext("2d");
-b.place(2, 0, 0, 0);
-b.place(2, 1, 0, 1);
-b.place(2, 2, 0, 2);
-b.place(2, 3, 1, 0, {u: 1, v: 0});
-b.place(2, 4, 1, 1, {u: 1, v: 0});
-b.place(2, 5, 1, 2, {u: 1, v: 0});
-b.place(2, 6, -1, -1);
-b.nextTurn();
-b.place(1, 0, 0, 0);
-b.place(1, 1, 0, 1);
-b.place(1, 2, 0, 2);
-b.place(1, 3, 1, 0, {u: -1, v: 2});
-b.place(1, 4, 1, 1, {u: -1, v: 2});
-b.place(1, 5, 1, 2, {u: -1, v: 2});
-b.place(1, 6, -1, -1);
-loop();
-console.log(b);
-*/

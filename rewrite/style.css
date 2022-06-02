@@ -1,3 +1,7 @@
+:root {
+  --accent-clr: #d82;
+}
+
 html {
   display: block;
   width: 100%;
@@ -91,6 +95,7 @@ body {
 
 .game .footer span.data::before {
   content: attr(data-value);
+  color: var(--accent-clr);
 }
 
 .game .footer .undo-btn {

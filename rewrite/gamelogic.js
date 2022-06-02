@@ -154,12 +154,16 @@ export class Board {
     return this.#undostack.pop()();
   }
   
-  nextTurn() {
+  nextTurn(callback) {
     this.#turn++;
     this.#turn %= this.#players.length;
     this.#actions = this.#maxactions;
     this.#undostack = [];
     this.evaluateStep();
+  }
+  
+  queryStatistics() {
+    return {turn: this.#turn, player: this.#players[this.#turn], actions: this.#actions, canundo: this.canundo};
   }
 }
 
@@ -326,15 +330,21 @@ class Piece {
 export class Player {
   #texture;
   #color;
+  #name
   constructor(config) {
-    const {texture, color} = config;
+    const {texture, color, name} = config;
     
     this.#texture = texture;
     this.#color = color;
+    this.#name = name;
   }
   
   get color() {
     return this.#color;
+  }
+  
+  get name() {
+    return this.#name;
   }
   
   drawPiece(cnv, ctx, ticks, d, x, y, piece) {
