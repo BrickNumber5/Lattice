@@ -5,6 +5,7 @@ export class Board {
   #size;
   #nodes;
   #players;
+  #turnN;
   #turn;
   #actions;
   #maxactions;
@@ -30,11 +31,13 @@ export class Board {
     this.#players = Object.freeze([...players]);
     this.#maxactions = maxactions;
     this.#turn = -1;
+    this.#turnN = -1;
     this.nextTurn();
   }
   
   at(u, v) {
     if (u < 0 || v < 0) return null;
+    if (u + v >= this.#size) return null;
     return this.#nodes.get(u + v * this.#size);
   }
   
@@ -46,6 +49,10 @@ export class Board {
     return this.#players;
   }
   
+  get player() {
+    return this.#players[this.#turn];
+  }
+  
   boardToScreen(u, v, w, d) {
     return {
       x: w / 2 - (this.#size - 1) * d / 2 + u * d + v * d * this.#ccos,
@@ -53,7 +60,15 @@ export class Board {
     };
   }
   
-  draw(cnv, ctx, ticks) {
+  screenToBoard(x, y, w, d) {
+    const v = (this.#size - 1) / 2 +  (y - w / 2) / (d * this.#csin)
+    return {
+      u: (this.#size - 1) / 2 - w / (2 * d) - v * this.#ccos + x / d,
+      v
+    };
+  }
+  
+  draw(cnv, ctx, ticks, cursor) {
     // Assumes the canvas is square
     const d = cnv.width / (this.#size + 2);
     
@@ -87,6 +102,16 @@ export class Board {
     for (let [_, node] of this.#nodes) {
       node.draw(cnv, ctx, ticks, d);
     }
+    
+    if (cursor) {
+      let {u, v} = this.screenToBoard(cursor.x, cursor.y, cnv.width, d);
+      u = Math.round(u);
+      v = Math.round(v);
+      cursor.u = u;
+      cursor.v = v;
+      
+      this.at(u, v)?.drawCursor(cnv, ctx, ticks, d);
+    }
   }
   
   pushUndo(undoFn) {
@@ -98,6 +123,27 @@ export class Board {
   }
   
   // --- User Callable Functions Below
+  
+  legalMoves(u, v) {
+    const node = this.at(u, v);
+    if (!node) return [];
+    if (this.#actions < 1) return [];
+    if (!node.piece) {
+      if (this.#actions >= 2) return ["place-major", "place-minor"];
+      return ["place-minor"];
+    }
+    const {piece} = node;
+    if (piece.player !== this.#players[this.#turn]) return [];
+    if (piece.info.range === -1) return [];
+    if (piece.info.range === 0) {
+      return node
+               .neighbors
+               .filter(n => !n.piece)
+               .map(n => ({type: "move", u: n.u, v: n.v}));
+    }
+    if (piece.info.range === 1) return ["retarget"];
+    throw "Failed to Calculate legal moves";
+  }
   
   get actions() {
     return this.#actions;
@@ -154,16 +200,17 @@ export class Board {
     return this.#undostack.pop()();
   }
   
-  nextTurn(callback) {
+  nextTurn() {
     this.#turn++;
     this.#turn %= this.#players.length;
+    if (this.#turn === 0) this.#turnN++;
     this.#actions = this.#maxactions;
     this.#undostack = [];
     this.evaluateStep();
   }
   
   queryStatistics() {
-    return {turn: this.#turn, player: this.#players[this.#turn], actions: this.#actions, canundo: this.canundo};
+    return {turn: this.#turnN, player: this.#players[this.#turn], actions: this.#actions, canundo: this.canundo};
   }
 }
 
@@ -257,6 +304,25 @@ class Node {
     ctx.arc(x, y, 7 * d / 24, 0, 2 * Math.PI);
     ctx.fill();
     ctx.stroke();
+    
+    this.#piece?.draw?.(cnv, ctx, ticks, d, x, y);
+  }
+  
+  drawCursor(cnv, ctx, ticks, d) {
+    const {x, y} = this.#board.boardToScreen(this.#u, this.#v, cnv.width, d);
+    d *= Math.cos(2 * Math.PI * ticks / 3000) / 8 + 1.5;
+    
+    ctx.strokeStyle = this.#board.player.color;
+    const r = 7 * d / 24;
+    const C = 2 * Math.PI * r;
+    ctx.setLineDash([C / 8, C / 8]);
+    ctx.lineDashOffset = -C / 16;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineCap = "butt";
     
     this.#piece?.draw?.(cnv, ctx, ticks, d, x, y);
   }

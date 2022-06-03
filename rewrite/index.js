@@ -6,8 +6,8 @@ const allplayers = [
   new GAME.Player({name: "Orange", color: "#d82"}),
   new GAME.Player({name: "Blue",   color: "#28d"}),
   new GAME.Player({name: "Pink",   color: "#d88"}),
-  new GAME.Player({name: "Yellow", color: "#24d"}),
-  new GAME.Player({name: "Green",  color: "#bb2"})
+  new GAME.Player({name: "Yellow", color: "#bb2"}),
+  new GAME.Player({name: "Green",  color: "#2b3"})
 ];
 
 let board = new GAME.Board({size: 9, maxactions: 2, players: allplayers.slice(0, 2)});

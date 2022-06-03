@@ -19,7 +19,7 @@ function loop(time) {
   
   ctx.clearRect(0, 0, cnv.width, cnv.height);
   
-  board.draw(cnv, ctx, time);
+  board.draw(cnv, ctx, time, cursor);
   
   repaintFooter(board.queryStatistics());
   
@@ -169,6 +169,10 @@ export function closeMenu() {
   }
 }
 
+
+document.querySelector(".game .footer .undo-btn").onclick = () => board.undo();
+document.querySelector(".game .footer .next-turn-btn").onclick = () => board.nextTurn();
+
 document.querySelector(".game .header .menu-btn").onclick = openMenu.bind(null, "#menu");
 
 const footer = document.querySelector(".game .footer");
@@ -188,6 +192,12 @@ const sizeCanvas = () => {
   const d = cnv.parentNode.clientHeight;
   cnv.style.display = "";
   cnv.width = cnv.height = d;
+};
+
+const cursor = {x: -1000, y: -1000, state: "hover"};
+cnv.onpointermove = e => {
+  cursor.x = e.offsetX;
+  cursor.y = e.offsetY;
 };
 
 window.onresize = sizeCanvas;
