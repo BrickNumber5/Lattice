@@ -110,7 +110,54 @@ export class Board {
       cursor.u = u;
       cursor.v = v;
       
-      this.at(u, v)?.drawCursor(cnv, ctx, ticks, d);
+      if (cursor.state === "hover") {
+        if (u >= 0 && v >= 0 && u + v < this.#size) this.drawCursor(cnv, ctx, ticks, d, u, v);
+        return;
+      }
+      
+      if (cursor.state === "place") {
+        const neighborCoords = (this.#actions > 1 ? unitVectors.slice() : []).concat({u: 0, v: 0}).map(vec => cursor.ui + vec.u + 2 * this.#size * (cursor.vi + vec.v));
+        const {x, y} = this.boardToScreen(cursor.ui, cursor.vi, cnv.width, d);
+        ctx.fillStyle = "#555a";
+        ctx.beginPath();
+        ctx.arc(x, y, 1.5 * d, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        if (this.#actions > 1) {
+          this.player.drawPiece(cnv, ctx, ticks, d, x + d, y, {info: {range: 0, spec: 0}});
+          this.player.drawPiece(cnv, ctx, ticks, d, x + d * this.#ccos, y + d * this.#csin, {info: {range: 0, spec: 1}});
+          this.player.drawPiece(cnv, ctx, ticks, d, x + d * this.#ccos - d, y + d * this.#csin, {info: {range: 0, spec: 2}});
+          
+          const targetVector = {u: 1, v: -1};
+          this.player.drawPiece(cnv, ctx, ticks, d, x - d, y, {info: {range: 1, spec: 0, targetVector}});
+          this.player.drawPiece(cnv, ctx, ticks, d, x - d * this.#ccos, y - d * this.#csin, {info: {range: 1, spec: 1, targetVector}});
+          this.player.drawPiece(cnv, ctx, ticks, d, x - d * this.#ccos + d, y - d * this.#csin, {info: {range: 1, spec: 2, targetVector}});
+        }
+        this.player.drawPiece(cnv, ctx, ticks, d, x, y, {info: {range: -1, spec: -1}});
+        
+        
+        if (neighborCoords.includes(u + 2 * this.#size * v)) this.drawCursor(cnv, ctx, ticks, d, u, v);
+        return;
+      }
+      
+      if (cursor.state === "target") {
+        const {x, y} = this.boardToScreen(cursor.ui, cursor.vi, cnv.width, d);
+        let targetVector = {u: 0, v: 0};
+        if (u >= 0 && v >= 0 && u + v < this.#size) {
+          targetVector = {u: cursor.u - cursor.ui, v: cursor.v - cursor.vi};
+          
+          this.drawCursor(cnv, ctx, ticks, d, u, v);
+        }
+        this.drawCursor(cnv, ctx, ticks, d, cursor.ui, cursor.vi);
+        if (cursor.type === "first") this.player.drawPiece(cnv, ctx, ticks, d, x, y, {info: {targetVector, ...cursor.piece}});
+        return;
+      }
+      if (cursor.state === "move") {
+        const {u, v, ui, vi} = cursor;
+        if (cursor.moves.some(m => m.u === u && m.v === v)) this.drawCursor(cnv, ctx, ticks, d, u, v);
+        this.drawCursor(cnv, ctx, ticks, d, ui, vi);
+        return;
+      }
     }
   }
   
@@ -120,6 +167,23 @@ export class Board {
   
   evaluateStep() {
     // TODO
+  }
+  
+  drawCursor(cnv, ctx, ticks, d, u, v) {
+    const {x, y} = this.boardToScreen(u, v, cnv.width, d);
+    d *= Math.cos(2 * Math.PI * ticks / 3000) / 8 + 1.5;
+    
+    ctx.strokeStyle = this.player.color;
+    const r = 7 * d / 24;
+    const C = 2 * Math.PI * r;
+    ctx.setLineDash([C / 8, C / 8]);
+    ctx.lineDashOffset = -C / 16;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineCap = "butt";
   }
   
   // --- User Callable Functions Below
@@ -136,8 +200,7 @@ export class Board {
     if (piece.player !== this.#players[this.#turn]) return [];
     if (piece.info.range === -1) return [];
     if (piece.info.range === 0) {
-      return node
-               .neighbors
+      return Array.from(node.neighbors)
                .filter(n => !n.piece)
                .map(n => ({type: "move", u: n.u, v: n.v}));
     }
@@ -214,6 +277,15 @@ export class Board {
   }
 }
 
+export const unitVectors = [
+  {u:  1, v:  0}, // u
+  {u:  0, v:  1}, // v
+  {u: -1, v:  1}, // -u + v
+  {u: -1, v:  0}, // -u
+  {u:  0, v: -1}, // -v
+  {u:  1, v: -1}  // u + -v
+];
+
 class Node {
   #board;
   #u;
@@ -230,14 +302,6 @@ class Node {
   _initNeighbors() {
     if (this.#neighbors != null) throw "Neighbors already initialized";
     this.#neighbors = new Set();
-    const unitVectors = [
-      {u:  1, v:  0}, // u
-      {u:  0, v:  1}, // v
-      {u: -1, v:  1}, // -u + v
-      {u: -1, v:  0}, // -u
-      {u:  0, v: -1}, // -v
-      {u:  1, v: -1}  // u + -v
-    ];
     for (let vec of unitVectors) {
       const {u, v} = vec;
       const neighbor = this.#board.at(this.#u + u, this.#v + v);
@@ -304,25 +368,6 @@ class Node {
     ctx.arc(x, y, 7 * d / 24, 0, 2 * Math.PI);
     ctx.fill();
     ctx.stroke();
-    
-    this.#piece?.draw?.(cnv, ctx, ticks, d, x, y);
-  }
-  
-  drawCursor(cnv, ctx, ticks, d) {
-    const {x, y} = this.#board.boardToScreen(this.#u, this.#v, cnv.width, d);
-    d *= Math.cos(2 * Math.PI * ticks / 3000) / 8 + 1.5;
-    
-    ctx.strokeStyle = this.#board.player.color;
-    const r = 7 * d / 24;
-    const C = 2 * Math.PI * r;
-    ctx.setLineDash([C / 8, C / 8]);
-    ctx.lineDashOffset = -C / 16;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, 2 * Math.PI);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.lineCap = "butt";
     
     this.#piece?.draw?.(cnv, ctx, ticks, d, x, y);
   }
@@ -447,6 +492,20 @@ export class Player {
       ctx.beginPath();
       ctx.arc(x, y, d / 8, 0, 2 * Math.PI);
       ctx.stroke();
+    }
+    if (info.range === 1) {
+      const {u, v} = info.targetVector;
+      const cos = Math.cos(-Math.PI / 3);
+      const sin = Math.sin(-Math.PI / 3);
+      let xo = (u + v * cos);
+      let yo = v * sin;
+      const l = Math.sqrt(xo * xo + yo * yo);
+      xo /= l;
+      yo /= l;
+      ctx.fillStyle = this.#color;
+      ctx.beginPath();
+      ctx.arc(x + d * xo / 3, y + d * yo / 3, d / 8, 0, 2 * Math.PI);
+      ctx.fill();
     }
   }
 }

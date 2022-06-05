@@ -199,6 +199,91 @@ cnv.onpointermove = e => {
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
 };
+cnv.onpointerdown = e => {
+  cursor.x = e.offsetX;
+  cursor.y = e.offsetY;
+  const {u, v} = board.screenToBoard(cursor.x, cursor.y, cnv.width, cnv.width / (board.size + 2));
+  cursor.u = Math.round(u);
+  cursor.v = Math.round(v);
+  if (cursor.state === "hover") {
+    const moves = board.legalMoves(cursor.u, cursor.v);
+    if (moves.length === 0) return;
+    if (moves.includes("place-major") || moves.includes("place-minor")) {
+      cursor.state = "place";
+      cursor.xi = cursor.x;
+      cursor.yi = cursor.y;
+      cursor.ui = cursor.u;
+      cursor.vi = cursor.v;
+      return;
+    }
+    if (moves.includes("retarget")) {
+      cursor.state = "target";
+      cursor.type = "adjust";
+      cursor.ui = cursor.u;
+      cursor.vi = cursor.v;
+      return;
+    }
+    if (moves.some(m => m.type === "move")) {
+      cursor.state = "move";
+      cursor.ui = cursor.u;
+      cursor.vi = cursor.v;
+      cursor.moves = moves;
+      return;
+    }
+  }
+  if (cursor.state === "place") {
+    if (board.actions > 1) {
+      if (cursor.u - cursor.ui ===  1 && cursor.v - cursor.vi === 0) board.place(cursor.ui, cursor.vi, 0, 0);
+      if (cursor.u - cursor.ui ===  0 && cursor.v - cursor.vi === 1) board.place(cursor.ui, cursor.vi, 0, 1);
+      if (cursor.u - cursor.ui === -1 && cursor.v - cursor.vi === 1) board.place(cursor.ui, cursor.vi, 0, 2);
+      
+      if (cursor.u - cursor.ui === -1 && cursor.v - cursor.vi === 0) {
+        cursor.state = "target";
+        cursor.type = "first";
+        cursor.piece = {range: 1, spec: 0};
+        return;
+      }
+      if (cursor.u - cursor.ui === 0 && cursor.v - cursor.vi === -1) {
+        cursor.state = "target";
+        cursor.type = "first";
+        cursor.piece = {range: 1, spec: 1};
+        return;
+      }
+      if (cursor.u - cursor.ui === 1 && cursor.v - cursor.vi === -1) {
+        cursor.state = "target";
+        cursor.type = "first";
+        cursor.piece = {range: 1, spec: 2};
+        return;
+      }
+    }
+    
+    if (cursor.u - cursor.ui === 0 && cursor.v - cursor.vi === 0) board.place(cursor.ui, cursor.vi, -1, -1);
+    
+    cursor.state = "hover";
+    return;
+  }
+  if (cursor.state === "target") {
+    if (cursor.u >= 0 && cursor.v >= 0 && cursor.u + cursor.v < board.size) {
+      if (cursor.type === "first") {
+        board.place(cursor.ui, cursor.vi, cursor.piece.range, cursor.piece.spec, {u: cursor.u - cursor.ui, v: cursor.v - cursor.vi});
+      } else {
+        board.retarget(cursor.ui, cursor.vi, cursor.u, cursor.v);
+      }
+    }
+    
+    cursor.state = "hover";
+    return;
+  }
+  if (cursor.state === "move") {
+    board.move(cursor.ui, cursor.vi, cursor.u, cursor.v);
+    cursor.state = "hover";
+    return;
+  }
+};
+
+window.onpointerdown = e => {
+  if (e.srcElement !== cnv) cursor.state = "hover";
+};
 
 window.onresize = sizeCanvas;
 sizeCanvas();
