@@ -42,13 +42,13 @@ body {
 .game .header .menu-btn {
   display: inline-block;
   margin: 0.5rem;
+  padding: 3px;
   width: calc(3rem - 6px);
   height: calc(3rem - 6px);
   background-image: url(./assets/menu-light.svg);
   background-size: 2.25rem;
   background-position: center;
   background-repeat: no-repeat;
-  border: solid #ddd 3px;
   border-radius: 1rem;
   cursor: pointer;
 }
@@ -115,13 +115,13 @@ body {
 .game .footer .undo-btn {
   display: inline-block;
   margin: 0.5rem;
+  padding: 3px;
   width: calc(3rem - 6px);
   height: calc(3rem - 6px);
   background-image: url(./assets/undo-light.svg);
   background-size: 2.25rem;
   background-position: center;
   background-repeat: no-repeat;
-  border: solid #ddd 3px;
   border-radius: 1rem;
   cursor: pointer;
 }
@@ -134,13 +134,13 @@ body {
 .game .footer .next-turn-btn {
   display: inline-block;
   margin: 0.5rem;
+  padding: 3px;
   width: calc(3rem - 6px);
   height: calc(3rem - 6px);
   background-image: url(./assets/next-light.svg);
   background-size: 2.25rem;
   background-position: center;
   background-repeat: no-repeat;
-  border: solid #ddd 3px;
   border-radius: 1rem;
   cursor: pointer;
 }
