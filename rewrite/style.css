@@ -67,6 +67,19 @@ body {
   font-size: 2.2rem;
 }
 
+.game .header .version {
+  position: absolute;
+  right: 0.5rem;
+  top: 0;
+  color: #ddd;
+  font-family: 'Comfortaa', sans-serif;
+  font-size: 2.2rem;
+}
+
+.game .header .version strong {
+  color: #6cf;
+}
+
 .game .header .author-line {
   position: absolute;
   left: 4.5rem;
@@ -88,6 +101,7 @@ body {
 }
 
 .game .footer span {
+  width: 16ch;
   color: #ccc;
   font-family: 'Comfortaa', sans-serif;
   font-size: 2.5rem;

@@ -90,9 +90,16 @@ export class Board {
     
     
     let dash = d * 2 * Math.PI / 36;
+    ctx.lineWidth = d / 4;
+    ctx.globalAlpha = 0.6;
     ctx.setLineDash([dash, 2 * dash]);
     ctx.lineCap = "round";
-    ctx.lineDashOffset = -(ticks % 30000) * 2 * Math.PI * d / 30000;
+    ctx.lineDashOffset = -(ticks % 120000) * 2 * Math.PI * d / 120000;
+    for (let [_, node] of this.#nodes) {
+      node.drawTargets(cnv, ctx, ticks, d);
+    }
+    ctx.lineWidth = d / 12;
+    ctx.globalAlpha = 1;
     for (let [_, node] of this.#nodes) {
       node.drawTargets(cnv, ctx, ticks, d);
     }
