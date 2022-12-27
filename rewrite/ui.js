@@ -39,10 +39,9 @@ export class Menu {
   }
   
   generateHTML() {
-    const popup = document.createElement("div");
+    const popup = document.createElement("dialog");
     popup.className = "popup";
     popup.dataset.menuId = this.#tag;
-    popup.style.display = "none";
     
     const close = document.createElement("button");
     close.className = "close-btn";
@@ -153,19 +152,16 @@ export function addMenu(m) {
 }
 
 export function openMenu(id) {
-  menuelem.style.display = "";
-  if (menuStack.length > 0) menuelem.querySelector(`.popup[data-menu-id="${menuStack[menuStack.length - 1]}"]`).style.display = "none";
+  if (menuStack.length > 0) menuelem.querySelector(`.popup[data-menu-id="${menuStack[menuStack.length - 1]}"]`).close();
   menuStack.push(id);
-  menuelem.querySelector(`.popup[data-menu-id="${id}"]`).style.display = "";
+  menuelem.querySelector(`.popup[data-menu-id="${id}"]`).showModal();
 }
 
 export function closeMenu() {
-  menuelem.querySelector(`.popup[data-menu-id="${menuStack[menuStack.length - 1]}"]`).style.display = "none";
+  menuelem.querySelector(`.popup[data-menu-id="${menuStack[menuStack.length - 1]}"]`).close();
   menuStack.pop();
   if (menuStack.length > 0) {
-    menuelem.querySelector(`.popup[data-menu-id="${menuStack[menuStack.length - 1]}"]`).style.display = "";
-  } else {
-    menuelem.style.display = "none";
+    menuelem.querySelector(`.popup[data-menu-id="${menuStack[menuStack.length - 1]}"]`).showModal();
   }
 }
 

@@ -18,7 +18,7 @@ UI.setBoard(board);
   let size;
   let players;
   let actions;
-  UI.addMenu(new UI.Menu("Menu", "#menu", [
+  UI.addMenu(new UI.Menu("Lattice", "#menu", [
     new UI.SubMenu("New Game", [
       size = new UI.NumberInput("Board Size", 4, 25, 9),
       players = new UI.NumberInput("Players", 2, 5, 2),

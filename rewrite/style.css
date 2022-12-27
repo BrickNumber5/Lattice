@@ -156,21 +156,11 @@ body {
   justify-content: center;
 }
 
-.menu {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  background-color: #2228;
-  padding: 2rem;
-}
-
 .menu .popup {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -182,6 +172,23 @@ body {
   background-color: #383838;
   color: #ddd;
   font-family: 'Comfortaa', sans-serif;
+}
+
+.menu .popup:not([open]) {
+  display: none;
+}
+
+.menu .popup::backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  background-color: #2228;
+  padding: 2rem;
 }
 
 .menu .popup .close-btn {
