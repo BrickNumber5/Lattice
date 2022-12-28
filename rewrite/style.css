@@ -35,8 +35,7 @@ body {
   display: block;
   background-color: #0004;
   width: 100%;
-  min-height: 4rem;
-  flex: 1 1 4rem;
+  flex: 0 0 4rem;
 }
 
 .game .header .menu-btn {
@@ -95,8 +94,7 @@ body {
   align-items: center;
   background-color: #0004;
   width: 100%;
-  min-height: 4rem;
-  flex: 1 1 4rem;
+  flex: 0 0 4rem;
   justify-content: space-around;
 }
 
@@ -123,6 +121,7 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   border-radius: 1rem;
+  flex-shrink: 0;
   cursor: pointer;
 }
 
@@ -142,6 +141,7 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   border-radius: 1rem;
+  flex-shrink: 0;
   cursor: pointer;
 }
 
@@ -150,10 +150,48 @@ body {
   background-image: url(./assets/next-dark.svg);
 }
 
-.game .board {
+.game .main-section {
   display: flex;
-  aspect-ratio: 1;
+  flex-direction: row;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+.game .main-section .board {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  flex-grow: 1;
   justify-content: center;
+}
+
+.game .main-section .board canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+}
+
+.sidebar {
+  display: block;
+}
+
+@media (min-aspect-ratio: 1/1) {
+  .game .main-section .sidebar {
+    border-left: 0.5rem solid #0004;
+    min-width: 20rem;
+  }
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .game .main-section {
+    flex-direction: column;
+  }
+  
+  .game .main-section .sidebar {
+    border-top: 0.5rem solid #0004;
+    min-height: 20rem;
+  }
 }
 
 .menu .popup {

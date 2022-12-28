@@ -185,9 +185,9 @@ function repaintFooter(statistics) {
 const sizeCanvas = () => {
   // Hiding and Unhiding the canvas prevents it from mangling the clientHeight value
   cnv.style.display = "none";
-  const d = cnv.parentNode.clientHeight;
+  const d = Math.min(cnv.parentNode.clientHeight, cnv.parentNode.clientWidth);
   cnv.style.display = "";
-  cnv.width = cnv.height = d;
+  cnv.width = cnv.height = 1.25 * d;
 };
 
 const cursor = {x: -1000, y: -1000, state: "hover"};
