@@ -180,6 +180,7 @@ function repaintFooter(statistics) {
   footer.querySelector(".turn .data").dataset.value = statistics.turn + 1;
   footer.querySelector(".player .data").dataset.value = statistics.player.name;
   footer.querySelector(".actions .data").dataset.value = statistics.actions;
+  footer.querySelector(".undo-btn").disabled = !statistics.canundo;
 }
 
 const sizeCanvas = () => {
