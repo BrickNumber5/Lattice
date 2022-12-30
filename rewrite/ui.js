@@ -21,7 +21,7 @@ function loop(time) {
   
   board.draw(cnv, ctx, time, cursor);
   
-  repaintFooter(board.queryStatistics());
+  repaintInformation(board.queryStatistics());
   
   requestAnimationFrame(loop);
 }
@@ -172,15 +172,71 @@ document.querySelector(".game .footer .next-turn-btn").onclick = () => board.nex
 document.querySelector(".game .header .menu-btn").onclick = openMenu.bind(null, "#menu");
 
 const footer = document.querySelector(".game .footer");
-let pStats = {turn: null, player: null, actions: null, canundo: null};
-function repaintFooter(statistics) {
-  if (pStats.turn === statistics.turn && pStats.player === statistics.player && pStats.actions === statistics.actions && pStats.canundo === statistics.canundo) return;
+const sidebar = document.querySelector(".game .sidebar");
+let pStats = {};
+function repaintInformation(statistics) {
+  if (statistics.player.color !== pStats?.player?.color) document.documentElement.style.setProperty('--accent-clr', statistics.player.color);
+  if (statistics.turn !== pStats?.turn) footer.querySelector(".turn .data").dataset.value = statistics.turn + 1;
+  if (statistics.player.name !== pStats?.player?.name) footer.querySelector(".player .data").dataset.value = statistics.player.name;
+  if (statistics.actions !== pStats?.actions) footer.querySelector(".actions .data").dataset.value = statistics.actions;
+  if (statistics.canundo !== pStats?.canundo) footer.querySelector(".undo-btn").disabled = !statistics.canundo;
+  
+  // Scoreboard
+  let scoreboard = sidebar.querySelector(".scoreboard tbody");
+  if (statistics.players.length !== pStats?.players?.length) {
+    // Rebuild scoreboard
+    
+    scoreboard.replaceChildren();
+    
+    scoreboard.parentNode.querySelector("th").colSpan = statistics.players.length + 2;
+    
+    let absrow = document.createElement("tr");
+    let relrow = document.createElement("tr");
+    for (let p of statistics.players) {
+      let eA = document.createElement("td");
+      eA.style.color = p.color;
+      eA.innerText = "-";
+      absrow.appendChild(eA);
+      
+      let eR = document.createElement("td");
+      eR.style.color = p.color;
+      eR.innerText = "-";
+      relrow.appendChild(eR);
+    }
+    
+    let s = document.createElement("td");
+    s.innerText = "/";
+    relrow.appendChild(s);
+    
+    let t = document.createElement("td");
+    t.className = "threshold-score";
+    t.innerText = "-";
+    relrow.appendChild(t);
+    
+    scoreboard.appendChild(absrow);
+    scoreboard.appendChild(relrow);
+    
+    pStats.scores = null;
+  }
+  
+  for (let i in statistics.players) {
+    let p = statistics.players[i];
+    let sa = statistics.scores.abs.get(p);
+    if (sa !== pStats?.scores?.abs?.get(p)) {
+      scoreboard.firstChild.children[i].innerText = sa;
+    }
+    
+    let sr = statistics.scores.rel.get(p);
+    if (sr !== pStats?.scores?.rel?.get(p)) {
+      scoreboard.lastChild.children[i].innerText = (sr <= 0 ? "" : "+") + sr;
+    }      
+  }
+  
+  if (statistics.scores.threshold !== pStats?.scores?.threshold) {
+    scoreboard.querySelector(".threshold-score").innerText = "+" + Math.max(statistics.scores.threshold - 1, 1);
+  }
+  
   pStats = statistics;
-  document.documentElement.style.setProperty('--accent-clr', statistics.player.color);
-  footer.querySelector(".turn .data").dataset.value = statistics.turn + 1;
-  footer.querySelector(".player .data").dataset.value = statistics.player.name;
-  footer.querySelector(".actions .data").dataset.value = statistics.actions;
-  footer.querySelector(".undo-btn").disabled = !statistics.canundo;
 }
 
 const sizeCanvas = () => {

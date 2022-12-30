@@ -98,11 +98,15 @@ body {
   justify-content: space-around;
 }
 
-.game .footer span {
-  width: 16ch;
+.game .footer > span {
+  width: 10ch;
   color: #ccc;
   font-family: 'Comfortaa', sans-serif;
   font-size: 2.5rem;
+}
+
+.game .footer > span.player {
+  flex-grow: 1;
 }
 
 .game .footer span.data::before {
@@ -313,6 +317,10 @@ table {
   display: table;
 }
 
+tbody, thead {
+  display: table-row-group;
+}
+
 tr {
   display: table-row;
 }
@@ -337,6 +345,7 @@ th {
 .scoreboard td {
   padding: 0.2rem;
   width: 2ch;
+  text-align: right;
 }
 
 .banner {

@@ -4,3 +4,4 @@
 
  - (+) Completely rewrote everything
  - (+) Added Undo
+ - (+) Added Scoreboard

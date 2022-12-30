@@ -172,6 +172,32 @@ export class Board {
     this.#undostack.push(undoFn);
   }
   
+  computeScores() {
+    let abs = new Map(this.#players.map(p => [p, 0]));
+    
+    for (let [_, n] of this.#nodes) {
+      let p = n.piece;
+      if (!p) continue;
+      abs.set(p.player, abs.get(p.player) + 1);
+    }
+    
+    let highest = -1, shighest = -1;
+    abs.forEach(v => {
+      if (v >= highest) {
+        shighest = highest;
+        highest = v;
+      } else if (v > shighest) {
+        shighest = v;
+      }
+    });
+    
+    let rel = new Map([...abs].map(([k, v]) => [k, v - shighest]));
+    
+    let threshold = Math.max(Math.ceil(this.#size * (this.#size + 1) / 4) - this.#turnN, 1);
+    
+    return {abs, rel, threshold};
+  }
+  
   evaluateStep() {
     // TODO
   }
@@ -280,7 +306,14 @@ export class Board {
   }
   
   queryStatistics() {
-    return {turn: this.#turnN, player: this.#players[this.#turn], actions: this.#actions, canundo: this.canundo};
+    return {
+      turn: this.#turnN,
+      players: this.#players,
+      player: this.#players[this.#turn],
+      actions: this.#actions,
+      canundo: this.canundo,
+      scores: this.computeScores()
+    };
   }
 }
 
