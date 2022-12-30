@@ -173,6 +173,7 @@ document.querySelector(".game .header .menu-btn").onclick = openMenu.bind(null, 
 
 const footer = document.querySelector(".game .footer");
 const sidebar = document.querySelector(".game .sidebar");
+const victoryBanner = document.querySelector(".game .main-section .board #victory-banner");
 let pStats = {};
 function repaintInformation(statistics) {
   if (statistics.player.color !== pStats?.player?.color) document.documentElement.style.setProperty('--accent-clr', statistics.player.color);
@@ -180,6 +181,7 @@ function repaintInformation(statistics) {
   if (statistics.player.name !== pStats?.player?.name) footer.querySelector(".player .data").dataset.value = statistics.player.name;
   if (statistics.actions !== pStats?.actions) footer.querySelector(".actions .data").dataset.value = statistics.actions;
   if (statistics.canundo !== pStats?.canundo) footer.querySelector(".undo-btn").disabled = !statistics.canundo;
+  if (statistics.victory !== pStats?.victory) footer.querySelector(".next-turn-btn").disabled = !!statistics.victory;
   
   // Scoreboard
   let scoreboard = sidebar.querySelector(".scoreboard tbody");
@@ -236,6 +238,16 @@ function repaintInformation(statistics) {
     scoreboard.querySelector(".threshold-score").innerText = "+" + Math.max(statistics.scores.threshold - 1, 1);
   }
   
+  if (statistics.victory !== pStats?.victory) {
+    victoryBanner.style.display = (statistics.victory === null) ? "none" : "";
+    if (statistics.victory) {
+      let playerText = document.createElement("span");
+      playerText.innerText = statistics.victory.name;
+      playerText.style.color = statistics.victory.color;
+      victoryBanner.replaceChildren(playerText, " victory!");
+    }
+  }
+  
   pStats = statistics;
 }
 
@@ -249,10 +261,23 @@ const sizeCanvas = () => {
 
 const cursor = {x: -1000, y: -1000, state: "hover"};
 cnv.onpointermove = e => {
+  if (board.victory) {
+    cursor.x = cursor.y = -1000;
+    cursor.state = "hover";
+    return;
+  }
+  
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
 };
 cnv.onpointerdown = e => {
+  e.preventDefault();
+  
+  if (board.victory) {
+    cursor.state === "hover";
+    return;
+  }
+  
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
   const {u, v} = board.screenToBoard(cursor.x, cursor.y, cnv.width, cnv.width / (board.size + 2));

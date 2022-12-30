@@ -12,6 +12,7 @@ export class Board {
   #undostack;
   #ccos;
   #csin;
+  #victory;
   constructor(config) {
     const {size, players, maxactions} = config
     this.#size = size;
@@ -27,9 +28,11 @@ export class Board {
     }
     this.#nodes.forEach(n => n._initNeighbors());
     
-    
     this.#players = Object.freeze([...players]);
     this.#maxactions = maxactions;
+    
+    this.#victory = null;
+    
     this.#turn = -1;
     this.#turnN = -1;
     this.nextTurn();
@@ -296,6 +299,10 @@ export class Board {
     return this.#undostack.pop()();
   }
   
+  get victory() {
+    return this.#victory;
+  }
+  
   nextTurn() {
     this.#turn++;
     this.#turn %= this.#players.length;
@@ -303,6 +310,11 @@ export class Board {
     this.#actions = this.#maxactions;
     this.#undostack = [];
     this.evaluateStep();
+    if (this.#turn === 0) {
+      let {rel, threshold} = this.computeScores();
+      let p = [...rel].find(([_, v]) => v >= threshold)?.[0];
+      if (p) this.#victory = p;
+    }
   }
   
   queryStatistics() {
@@ -312,7 +324,8 @@ export class Board {
       player: this.#players[this.#turn],
       actions: this.#actions,
       canundo: this.canundo,
-      scores: this.computeScores()
+      scores: this.computeScores(),
+      victory: this.#victory,
     };
   }
 }

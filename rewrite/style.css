@@ -114,13 +114,12 @@ body {
   color: var(--accent-clr);
 }
 
-.game .footer .undo-btn {
+.game .footer .btn {
   display: inline-block;
   margin: 0.5rem;
   padding: 3px;
   width: calc(3rem - 6px);
   height: calc(3rem - 6px);
-  background-image: url(./assets/undo-light.svg);
   background-size: 2.25rem;
   background-position: center;
   background-repeat: no-repeat;
@@ -129,9 +128,14 @@ body {
   cursor: pointer;
 }
 
-.game .footer .undo-btn[disabled] {
+
+.game .footer .btn[disabled] {
   cursor: default;
   opacity: 0.5;
+}
+
+.game .footer .undo-btn {
+  background-image: url(./assets/undo-light.svg);
 }
 
 .game .footer .undo-btn:not([disabled]):is(:hover, :focus-visible) {
@@ -140,21 +144,10 @@ body {
 }
 
 .game .footer .next-turn-btn {
-  display: inline-block;
-  margin: 0.5rem;
-  padding: 3px;
-  width: calc(3rem - 6px);
-  height: calc(3rem - 6px);
   background-image: url(./assets/next-light.svg);
-  background-size: 2.25rem;
-  background-position: center;
-  background-repeat: no-repeat;
-  border-radius: 1rem;
-  flex-shrink: 0;
-  cursor: pointer;
 }
 
-.game .footer .next-turn-btn:is(:hover, :focus-visible) {
+.game .footer .next-turn-btn:not([disabled]):is(:hover, :focus-visible) {
   background-color: #ddd;
   background-image: url(./assets/next-dark.svg);
 }
@@ -193,7 +186,7 @@ body {
 @media (min-aspect-ratio: 1/1) {
   .game .main-section .sidebar {
     border-left: 0.5rem solid #0004;
-    width: 16rem;
+    width: 20rem;
   }
 }
 
