@@ -10,7 +10,7 @@ const allplayers = [
   new GAME.Player({name: "Green",  color: "#2b3"})
 ];
 
-let board = new GAME.Board({size: 9, maxactions: 2, players: allplayers.slice(0, 2)});
+let board = new GAME.Board({size: 9, maxactions: 3, players: allplayers.slice(0, 2)});
 
 UI.setBoard(board);
 
@@ -22,7 +22,7 @@ UI.setBoard(board);
     new UI.SubMenu("New Game", [
       size = new UI.NumberInput("Board Size", 4, 25, 9),
       players = new UI.NumberInput("Players", 2, 5, 2),
-      actions = new UI.NumberInput("Actions/Turn", 2, 10, 2),
+      actions = new UI.NumberInput("Actions/Turn", 2, 10, 3),
       new UI.Button("Start", () => {
         board = new GAME.Board({size: size.value, maxactions: actions.value, players: allplayers.slice(0, players.value)});
         UI.setBoard(board);

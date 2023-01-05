@@ -207,7 +207,7 @@ function repaintInformation(statistics) {
     }
     
     let s = document.createElement("td");
-    s.innerText = "/";
+    s.className = "sep";
     relrow.appendChild(s);
     
     let t = document.createElement("td");

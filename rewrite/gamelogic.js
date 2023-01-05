@@ -202,7 +202,63 @@ export class Board {
   }
   
   evaluateStep() {
-    // TODO
+    let pieces = new Set();
+    let s_pieces = new Set();
+    for (let [_, n] of this.#nodes) {
+      let p = n.piece;
+      if (!p) continue;
+      pieces.add(p);
+      if (p.info.spec === 0) s_pieces.add(p);
+      p.support = 0;
+      p.net_dmg = 0;
+    }
+    
+    const targets = (piece) => {
+      let {range, targetVector, node} = piece.info;
+      return node.getTargets(range, targetVector);
+    };
+    
+    // This is wildly inefficient, but I can't think of a better method, so hopefully it's fast enough in practice
+    const longest_support_paths = (from_support, already_visited) => /* Map<Piece, Distance> */ {
+      already_visited.add(from_support);
+      
+      let paths = new Map();
+      
+      const add_path = (to, dist) => {
+        // Strange comparison because undefined has NaN like properties and always compares false
+        if (!(dist <= paths.get(to))) paths.set(to, dist);
+      }
+      
+      for (let target of targets(from_support)) {
+        if (already_visited.has(target)) continue;
+        add_path(target, 1);
+        if (s_pieces.has(target)) longest_support_paths(target, already_visited).forEach(
+          (d, p) /* yes, <map>.forEach gives value, key pairs */ => add_path(p, d + 1));
+      }
+      
+      already_visited.delete(from_support);
+      
+      return paths;
+    };
+    
+    s_pieces.forEach(
+      s => longest_support_paths(s, new Set()).forEach(
+        (d, p) /* yes, <map>.forEach gives value, key pairs */ => p.support += 2 ** (d - 1)));
+    
+    pieces.forEach(p => {
+      let {range, spec, targetVector, node} = p.info;
+      if (spec === 1) {
+        // Attack
+        node.getTargets(range, targetVector).forEach(t => t.net_dmg += p.support);
+      } else if (spec === 2) {
+        // Defense
+        node.getTargets(range, targetVector).forEach(t => t.net_dmg -= p.support);
+      }
+    });
+    
+    pieces.forEach(p => {
+      if (p.net_dmg > 0) p.node.destroy();
+    });
   }
   
   drawCursor(cnv, ctx, ticks, d, u, v) {
@@ -378,7 +434,9 @@ class Node {
   get v() {return this.#v;}
   
   getTargets(range, targetVector) {
-    if (range === 0) {
+    if (range === -1) {
+      return new Set();
+    } else if (range === 0) {
       return new Set([...this.#neighbors].map(x => x.#piece).filter(x => x !== null));
     } else {
       if (targetVector.u === 0 && targetVector.v === 0) return new Set();
