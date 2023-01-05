@@ -115,3 +115,12 @@ h2 {
   background-color: white;
   color: black;
 }
+
+a {
+  cursor: pointer;
+  color: skyblue;
+}
+
+a:is(:hover, :focus) {
+  text-decoration: underline;
+}
